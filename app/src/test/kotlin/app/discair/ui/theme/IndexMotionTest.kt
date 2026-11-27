@@ -16,7 +16,7 @@ import org.junit.Test
 /** docs/plans/INDEX_THEME.md section 8: Index's motion values match tokens.json, every duration is 0 when the phone removes animations, and the bar's order decides the slide. */
 class IndexMotionTest {
     private val motion: JsonObject by lazy {
-        val file = listOf("../../docs/design/index/tokens.json", "docs/design/index/tokens.json").map(::File).first { it.exists() }
+        val file = listOf("../design-tokens/index/tokens.json", "design-tokens/index/tokens.json").map(::File).first { it.exists() }
         Json.parseToJsonElement(file.readText()).jsonObject.getValue("motion").jsonObject
     }
 

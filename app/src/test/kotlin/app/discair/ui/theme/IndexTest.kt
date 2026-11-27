@@ -32,7 +32,7 @@ class IndexTest {
     private fun ratio(a: Color, b: Color) = Contrast.ratio(a, b)
 
     private val tokens: JsonObject by lazy {
-        val file = listOf("../../docs/design/index/tokens.json", "docs/design/index/tokens.json").map(::File).first { it.exists() }
+        val file = listOf("../design-tokens/index/tokens.json", "design-tokens/index/tokens.json").map(::File).first { it.exists() }
         Json.parseToJsonElement(file.readText()).jsonObject
     }
 
