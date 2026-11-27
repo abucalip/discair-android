@@ -156,35 +156,37 @@ internal fun BentoArtistContent(
             )
         }
 
-        // Hero artist tile (warm tone, 20dp rounded photo, name, summary, actions)
+        // Hero artist tile (warm tone, large photo on top, name + summary + circular Paths button below)
         item(key = "hero") {
             BentoTile(
                 Modifier.padding(horizontal = Side).fillMaxWidth().bentoTileEnter(0, pageKey),
                 tone = BentoTone.Warm,
             ) {
+                ArtistPhoto(
+                    d.name,
+                    d.owned.firstOrNull()?.artworkUrl,
+                    Modifier.fillMaxWidth().aspectRatio(1.45f).clip(RoundedCornerShape(BentoRules.ARTIST_TILE_RADIUS.dp)),
+                    rect = true,
+                )
+                Spacer(Modifier.height(12.dp))
                 Row(
                     Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(14.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    ArtistPhoto(
-                        d.name,
-                        d.owned.firstOrNull()?.artworkUrl,
-                        Modifier.size(116.dp).clip(RoundedCornerShape(BentoRules.ARTIST_TILE_RADIUS.dp)),
-                        rect = true,
-                    )
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(
                             d.name,
                             style = BentoType.heroTitle(),
                             color = t.onTone,
-                            maxLines = 3,
+                            maxLines = 2,
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.semantics { heading() },
                         )
                         val ownedCount = d.sections.albums.ownedCount ?: d.ownedAlbumCount ?: d.owned.size
                         val totalCount = d.sections.albums.albumCount
                         val summary = buildList {
+                            genres.firstOrNull()?.let { add(it) }
                             if (d.inLibrary) {
                                 add(if (totalCount != null && totalCount > ownedCount) "$ownedCount of $totalCount albums" else plural(ownedCount, "album"))
                             } else {
@@ -195,25 +197,55 @@ internal fun BentoArtistContent(
                         }.joinToString(" · ")
                         Text(summary, style = BentoType.small(), color = t.onToneMuted, maxLines = 2)
                     }
-                }
-                if (genres.isNotEmpty()) {
-                    Spacer(Modifier.height(12.dp))
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        genres.forEach { g ->
-                            BentoChip(g, selected = false, onClick = { open.genre(g.lowercase(), g) }, small = true, tone = BentoTone.Warm)
-                        }
+                    if (d.canPaths) {
+                        BentoIconButton(
+                            icon = BentoIcons.Paths,
+                            description = "Paths from ${d.name}",
+                            onClick = d.onPaths,
+                            tone = BentoTone.Warm,
+                        )
                     }
                 }
-                if (artistId != null || d.canPaths) {
-                    Spacer(Modifier.height(12.dp))
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        if (artistId != null) {
-                            BentoButton("Play", { play.playArtist(artistId, shuffle = false) }, icon = BentoIcons.Play, tone = BentoTone.Warm)
-                            BentoButton("Shuffle", { play.playArtist(artistId, shuffle = true) }, kind = BentoButtonKind.Outline, icon = BentoIcons.Shuffle, tone = BentoTone.Warm)
-                        }
-                        if (d.canPaths) {
-                            BentoButton("Paths", d.onPaths, kind = BentoButtonKind.Outline, icon = BentoIcons.Paths, tone = BentoTone.Warm)
-                        }
+            }
+        }
+
+        // Action row below the hero tile (Play, Shuffle, More)
+        if (artistId != null) {
+            item(key = "actions") {
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = Side),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    BentoButton(
+                        "Play top songs",
+                        { play.playArtist(artistId, shuffle = false) },
+                        icon = BentoIcons.Play,
+                        modifier = Modifier.weight(1f),
+                    )
+                    BentoIconButton(
+                        icon = BentoIcons.Shuffle,
+                        description = "Shuffle ${d.name}",
+                        onClick = { play.playArtist(artistId, shuffle = true) },
+                    )
+                    BentoIconButton(
+                        icon = BentoIcons.More,
+                        description = "More for ${d.name}",
+                        onClick = { showMenu = true },
+                    )
+                }
+            }
+        }
+
+        if (genres.isNotEmpty()) {
+            item(key = "genres") {
+                FlowRow(
+                    Modifier.fillMaxWidth().padding(horizontal = Side),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    genres.forEach { g ->
+                        BentoChip(g, selected = false, onClick = { open.genre(g.lowercase(), g) }, small = true)
                     }
                 }
             }
