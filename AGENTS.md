@@ -4,6 +4,7 @@ This repository (`abucalip/discair-android`) holds the native Android client for
 
 ## Contracts & shared references
 
+- Architecture map: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) (read before opening source or grepping)
 - Client contracts: [`docs/contracts/`](docs/contracts/) (`ANDROID_CLIENT_CONTRACT.md`, `ANDROID_CROSSFADE_CONTRACT.md`, `ANDROID_EQ_CONTRACT.md`, `ANDROID_LYRICS_CONTRACT.md`, `ANDROID_PLAYER_CONTRACT.md`)
 - Design notes: [`DESIGN.md`](DESIGN.md)
 - Recorded payloads and vendored server fixtures: [`contract-fixtures/`](contract-fixtures/README.md) and `design-tokens/`
