@@ -317,7 +317,11 @@ fun MainShell(state: UiState, model: AppViewModel, container: AppContainer) {
         ) { padding ->
             Column(Modifier.padding(padding).fillMaxSize()) {
             // A top-level page draws its own bar and banner (TopLevelPage), so the bar leaves with the page when one opens from it.
-            if (!onTopLevel) OfflineBanner(repo.staleSince)
+            if (!onTopLevel && repo.staleSince != null) {
+                Box(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background).statusBarsPadding()) {
+                    OfflineBanner(repo.staleSince)
+                }
+            }
             val swipeThreshold = with(androidx.compose.ui.platform.LocalDensity.current) { 72.dp.toPx() }
             // On any page but Home, a drag nothing else used (carousels, rows and pagers take theirs first) to the right goes back.
             val swipe = if (!destination.isHome()) Modifier.pointerInput(Unit) {

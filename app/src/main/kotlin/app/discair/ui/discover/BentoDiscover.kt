@@ -148,23 +148,50 @@ internal fun BentoDiscoverList(
             }
             val startIdx = tileIdx
             tileIdx += section.entries.size
-            items(section.entries.size, key = { FlowDiscoverRules.itemKey(section, section.entries[it]) }) { i ->
-                val entry = section.entries[i]
-                val albumKey = routeKey(entry.item.artistName, entry.item.album)
-                val sharedKey = albumKey.takeIf { sharedOwner[it] == FlowDiscoverRules.itemKey(section, entry) }
-                val saveState = saves[entry.key] ?: if (defaultSaved) SaveState.Saved else SaveState.Idle
-                val isHero = i == 0 && sIdx == 0
-                BentoDiscoverEntryTile(
-                    entry = entry,
-                    hero = isHero,
-                    tone = if (isHero) BentoTone.Surface else if (list == DiscoveryList.DeepDive && i % 3 == 0) BentoTone.Deep else BentoTone.Surface,
-                    sharedKey = sharedKey,
-                    open = open,
-                    saveState = saveState,
-                    onSave = { onSave(entry) },
-                    onDismiss = { artistToo -> onDismiss(entry, artistToo) },
-                    modifier = Modifier.animateItem().bentoTileEnter(startIdx + i, pageKey),
-                )
+            val rotation = listOf(BentoTone.Leaf, BentoTone.Bloom, BentoTone.Warm, BentoTone.Sky, BentoTone.Sun)
+            val heroEntry = if (sIdx == 0 && section.entries.isNotEmpty()) section.entries.first() else null
+            val restEntries = if (heroEntry != null) section.entries.drop(1) else section.entries
+            if (heroEntry != null) {
+                item(key = FlowDiscoverRules.itemKey(section, heroEntry)) {
+                    val albumKey = routeKey(heroEntry.item.artistName, heroEntry.item.album)
+                    val sharedKey = albumKey.takeIf { sharedOwner[it] == FlowDiscoverRules.itemKey(section, heroEntry) }
+                    val saveState = saves[heroEntry.key] ?: if (defaultSaved) SaveState.Saved else SaveState.Idle
+                    BentoDiscoverEntryTile(
+                        entry = heroEntry,
+                        hero = true,
+                        tone = BentoTone.Sun,
+                        sharedKey = sharedKey,
+                        open = open,
+                        saveState = saveState,
+                        onSave = { onSave(heroEntry) },
+                        onDismiss = { artistToo -> onDismiss(heroEntry, artistToo) },
+                        modifier = Modifier.animateItem().bentoTileEnter(startIdx, pageKey),
+                    )
+                }
+            }
+            val pairs = restEntries.chunked(2)
+            items(pairs.size, key = { "pair:$sIdx:${FlowDiscoverRules.itemKey(section, pairs[it].first())}" }) { pIdx ->
+                val pair = pairs[pIdx]
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Gap)) {
+                    pair.forEachIndexed { col, entry ->
+                        val i = pIdx * 2 + col
+                        val albumKey = routeKey(entry.item.artistName, entry.item.album)
+                        val sharedKey = albumKey.takeIf { sharedOwner[it] == FlowDiscoverRules.itemKey(section, entry) }
+                        val saveState = saves[entry.key] ?: if (defaultSaved) SaveState.Saved else SaveState.Idle
+                        BentoDiscoverEntryTile(
+                            entry = entry,
+                            hero = false,
+                            tone = rotation[i % rotation.size],
+                            sharedKey = sharedKey,
+                            open = open,
+                            saveState = saveState,
+                            onSave = { onSave(entry) },
+                            onDismiss = { artistToo -> onDismiss(entry, artistToo) },
+                            modifier = Modifier.weight(1f).bentoTileEnter(startIdx + 1 + i, pageKey),
+                        )
+                    }
+                    if (pair.size == 1) Spacer(Modifier.weight(1f))
+                }
             }
         }
     }
@@ -212,107 +239,117 @@ private fun BentoDiscoverEntryTile(
     val reason = pickReason(item.because, item.similarTo).ifBlank { null }
     val genre = GalleryListsRules.entryGenre(item.genres, item.genreRowLabel)
 
-    BentoTile(modifier.fillMaxWidth(), tone = tone) {
+    BentoTile(modifier.fillMaxWidth(), tone = tone, small = !hero, padding = if (hero) 14.dp else 10.dp) {
         if (hero) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.Top) {
-                AlbumCover(
-                    artist, item.album, null,
-                    Modifier.size(116.dp).aspectRatio(1f)
-                        .clip(RoundedCornerShape(BentoRules.COVER_TILE_RADIUS.dp))
-                        .then(if (sharedKey != null) Modifier.sharedCover(sharedKey) else Modifier)
-                        .clickable(role = Role.Button, onClickLabel = "Open ${item.album}", onClick = openAlbum),
-                    rect = true,
+            AlbumCover(
+                artist, item.album, null,
+                Modifier.fillMaxWidth().aspectRatio(1.35f)
+                    .clip(RoundedCornerShape(BentoRules.COVER_LARGE_RADIUS.dp))
+                    .then(if (sharedKey != null) Modifier.sharedCover(sharedKey) else Modifier)
+                    .clickable(role = Role.Button, onClickLabel = "Open ${item.album}", onClick = openAlbum),
+                rect = true,
+            )
+            Spacer(Modifier.height(10.dp))
+            if (!reason.isNullOrBlank()) {
+                Text(reason, style = BentoType.small(), color = muted, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Spacer(Modifier.height(2.dp))
+            }
+            Text(
+                item.album,
+                style = BentoType.heroTitle(),
+                color = fg,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.clickable(role = Role.Button, onClick = openAlbum),
+            )
+            Text(
+                listOfNotNull(artist, year?.toString(), genre).joinToString(" · "),
+                style = BentoType.small(),
+                color = muted,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.clickable(role = Role.Button) { open.artist(artist, null, null, null) },
+            )
+            Spacer(Modifier.height(12.dp))
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                itemVerticalAlignment = Alignment.CenterVertically,
+            ) {
+                BentoGetButton(
+                    state = hub.getState(artist, item.album),
+                    onGet = { hub.getAlbum(artist, item.album, entry.raw) },
+                    small = true,
+                    tone = tone,
                 )
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    genre?.let { BentoEyebrow(it, tone = tone) }
-                    Text(
-                        item.album,
-                        style = BentoType.tileTitle(),
-                        color = fg,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.clickable(role = Role.Button, onClick = openAlbum),
-                    )
-                    Text(
-                        listOfNotNull(artist, year?.toString()).joinToString(" · "),
-                        style = BentoType.small(),
-                        color = muted,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.clickable(role = Role.Button) { open.artist(artist, null, null, null) },
-                    )
-                    Spacer(Modifier.height(2.dp))
-                    BentoTag("Not in your library", tone = BentoTone.Warm)
-                }
+                BentoButton(
+                    label = when (saveState) {
+                        SaveState.Saved -> "Saved"
+                        SaveState.Pending -> "Saving…"
+                        SaveState.Failed -> "Try again"
+                        SaveState.Idle -> "Save"
+                    },
+                    onClick = onSave,
+                    kind = BentoButtonKind.Outline,
+                    small = true,
+                    icon = if (saveState == SaveState.Saved) BentoIcons.Check else BentoIcons.Bookmark,
+                    enabled = saveState != SaveState.Pending,
+                    tone = tone,
+                )
+                BentoIconButton(
+                    icon = BentoIcons.More,
+                    description = "Options for ${item.album}",
+                    onClick = { menuOpen = true },
+                    small = true,
+                    tone = tone,
+                )
             }
         } else {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                AlbumCover(
-                    artist, item.album, null,
-                    Modifier.size(84.dp).aspectRatio(1f)
-                        .clip(RoundedCornerShape(BentoRules.COVER_TILE_RADIUS.dp))
-                        .then(if (sharedKey != null) Modifier.sharedCover(sharedKey) else Modifier)
-                        .clickable(role = Role.Button, onClickLabel = "Open ${item.album}", onClick = openAlbum),
-                    rect = true,
+            AlbumCover(
+                artist, item.album, null,
+                Modifier.fillMaxWidth().aspectRatio(1f)
+                    .clip(RoundedCornerShape(BentoRules.COVER_TILE_RADIUS.dp))
+                    .then(if (sharedKey != null) Modifier.sharedCover(sharedKey) else Modifier)
+                    .clickable(role = Role.Button, onClickLabel = "Open ${item.album}", onClick = openAlbum),
+                rect = true,
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                item.album,
+                style = BentoType.rowTitle(),
+                color = fg,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.clickable(role = Role.Button, onClick = openAlbum),
+            )
+            Text(
+                listOfNotNull(artist, year?.toString()).joinToString(" · "),
+                style = BentoType.small(),
+                color = muted,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.clickable(role = Role.Button) { open.artist(artist, null, null, null) },
+            )
+            Spacer(Modifier.height(8.dp))
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                BentoGetButton(
+                    state = hub.getState(artist, item.album),
+                    onGet = { hub.getAlbum(artist, item.album, entry.raw) },
+                    small = true,
+                    tone = tone,
                 )
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    genre?.let { BentoEyebrow(it, tone = tone) }
-                    Text(
-                        item.album,
-                        style = BentoType.tileName(),
-                        color = fg,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.clickable(role = Role.Button, onClick = openAlbum),
-                    )
-                    Text(
-                        listOfNotNull(artist, year?.toString()).joinToString(" · "),
-                        style = BentoType.small(),
-                        color = muted,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.clickable(role = Role.Button) { open.artist(artist, null, null, null) },
-                    )
-                }
+                BentoIconButton(
+                    icon = BentoIcons.More,
+                    description = "Options for ${item.album}",
+                    onClick = { menuOpen = true },
+                    small = true,
+                    tone = tone,
+                )
             }
-        }
-        if (!reason.isNullOrBlank()) {
-            Spacer(Modifier.height(10.dp))
-            Text(reason, style = BentoType.body(), color = muted, maxLines = 3, overflow = TextOverflow.Ellipsis)
-        }
-        Spacer(Modifier.height(12.dp))
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            itemVerticalAlignment = Alignment.CenterVertically,
-        ) {
-            BentoGetButton(
-                state = hub.getState(artist, item.album),
-                onGet = { hub.getAlbum(artist, item.album, entry.raw) },
-                small = true,
-                tone = tone,
-            )
-            BentoButton(
-                label = when (saveState) {
-                    SaveState.Saved -> "Saved"
-                    SaveState.Pending -> "Saving…"
-                    SaveState.Failed -> "Try again"
-                    SaveState.Idle -> "Save"
-                },
-                onClick = onSave,
-                kind = BentoButtonKind.Outline,
-                small = true,
-                icon = if (saveState == SaveState.Saved) BentoIcons.Check else BentoIcons.Bookmark,
-                enabled = saveState != SaveState.Pending,
-                tone = tone,
-            )
-            BentoIconButton(
-                icon = BentoIcons.More,
-                description = "Options for ${item.album}",
-                onClick = { menuOpen = true },
-                small = true,
-                tone = tone,
-            )
         }
     }
 }

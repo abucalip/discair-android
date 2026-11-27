@@ -136,7 +136,7 @@ internal fun BentoPlayerFrame(onDismiss: () -> Unit, content: @Composable (close
         onDismissRequest = close,
         properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false, dismissOnBackPress = false),
     ) {
-        TransparentSystemBars()
+        TransparentSystemBars(lightBars = LocalPalette.current.light)
         AnimatedVisibility(
             visibleState = visible,
             enter = if (reduced) EnterTransition.None else
@@ -272,49 +272,59 @@ private fun BentoNowPlayingMain(
                         .onGloballyPositioned { BentoFlight.cover = it },
                 ) {
                     Cover(playerArtworkUrl(item.coverUrl), Modifier.fillMaxSize(), rect = true)
-                    if (quality != null) {
-                        BentoTag(quality, Modifier.align(Alignment.BottomStart).padding(12.dp), tone = BentoTone.Leaf)
-                    }
                 }
             }
         }
 
-        // Title + artist/album + seek + transport tile
-        BentoTile(Modifier.fillMaxWidth(), tone = BentoTone.Surface) {
+        // Title + artist/album + quality tag + seek + transport directly on ink
+        Column(Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
             Text(
                 item.title,
-                style = BentoType.tileTitle().copy(fontSize = 22.sp, lineHeight = 25.sp),
+                style = BentoType.heroTitle(),
                 color = p.text,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite; heading() },
             )
             Spacer(Modifier.height(4.dp))
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                if (item.artist.isNotBlank()) {
-                    Text(
-                        item.artist,
-                        style = BentoType.body().copy(fontWeight = FontWeight.SemiBold),
-                        color = p.control,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false)
-                            .clickable(role = Role.Button, onClickLabel = "Open artist") { onOpenArtist(item) },
-                    )
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Row(
+                    Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    if (item.artist.isNotBlank()) {
+                        Text(
+                            item.artist,
+                            style = BentoType.body().copy(fontWeight = FontWeight.SemiBold),
+                            color = p.textMuted,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false)
+                                .clickable(role = Role.Button, onClickLabel = "Open artist") { onOpenArtist(item) },
+                        )
+                    }
+                    if (item.artist.isNotBlank() && item.album.isNotBlank()) {
+                        Text("·", style = BentoType.body(), color = p.textMuted)
+                    }
+                    if (item.album.isNotBlank()) {
+                        Text(
+                            item.album,
+                            style = BentoType.body(),
+                            color = p.textMuted,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false)
+                                .clickable(role = Role.Button, onClickLabel = "Open album") { onOpenAlbum(item) },
+                        )
+                    }
                 }
-                if (item.artist.isNotBlank() && item.album.isNotBlank()) {
-                    Text("·", style = BentoType.body(), color = p.textMuted)
-                }
-                if (item.album.isNotBlank()) {
-                    Text(
-                        item.album,
-                        style = BentoType.body(),
-                        color = p.textMuted,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false)
-                            .clickable(role = Role.Button, onClickLabel = "Open album") { onOpenAlbum(item) },
-                    )
+                if (quality != null) {
+                    BentoTag(quality, tone = BentoTone.Leaf)
                 }
             }
 
@@ -336,7 +346,7 @@ private fun BentoNowPlayingMain(
                 BentoButton("Retry now", controller::retryNow, kind = BentoButtonKind.Outline, small = true)
             }
 
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(8.dp))
             SeekBar(
                 fraction = fraction,
                 enabled = duration > 0,
@@ -410,12 +420,12 @@ private fun BentoNowPlayingMain(
             }
         }
 
-        // Four tool tiles: Queue / Lyrics / EQ / Crossfade
+        // Four tool tiles: Lyrics (warm) / Queue (sun) / Equalizer (leaf) / Crossfade (bloom)
         Row(Modifier.fillMaxWidth().padding(bottom = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            ToolTile("Queue", BentoIcons.Queue, BentoTone.Warm, onQueue, Modifier.weight(1f))
-            ToolTile("Lyrics", BentoIcons.Quote, BentoTone.Bloom, onLyrics, Modifier.weight(1f))
-            ToolTile("EQ", BentoIcons.Tune, BentoTone.Leaf, onEqualizer, Modifier.weight(1f))
-            ToolTile("Crossfade", BentoIcons.Swap, BentoTone.Sky, onCrossfade, Modifier.weight(1f))
+            ToolTile("Lyrics", BentoIcons.Quote, BentoTone.Warm, onLyrics, Modifier.weight(1f))
+            ToolTile("Queue", BentoIcons.Queue, BentoTone.Sun, onQueue, Modifier.weight(1f))
+            ToolTile("Equalizer", BentoIcons.Tune, BentoTone.Leaf, onEqualizer, Modifier.weight(1f))
+            ToolTile("Crossfade", BentoIcons.Swap, BentoTone.Bloom, onCrossfade, Modifier.weight(1f))
         }
     }
 }

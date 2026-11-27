@@ -121,30 +121,12 @@ internal fun BentoLibrary(
             modifier = Modifier.padding(horizontal = Side).padding(bottom = Gap),
         )
 
-        // Two view tiles: Albums (warm / surface) and Artists (leaf / surface)
+        // Two view tiles: Artists (deep when active, warm when idle) and Albums (deep when active, sun when idle)
         BentoPairRow(
             Modifier.padding(horizontal = Side).padding(bottom = Gap),
             left = {
-                val active = state.tab == LibraryTab.Albums
-                val tone = if (active) BentoTone.Warm else BentoTone.Surface
-                BentoTile(
-                    Modifier.weight(1f),
-                    tone = tone,
-                    small = true,
-                    onClick = { model.selectTab(LibraryTab.Albums) },
-                    clickLabel = "Show albums",
-                ) {
-                    BentoTileLabel("View", tone = tone)
-                    Spacer(Modifier.height(2.dp))
-                    Text("Albums", style = BentoType.tileName(), color = tone.content(p, t), maxLines = 1)
-                    totals[LibraryTab.Albums]?.let { cnt ->
-                        Text("$cnt", style = BentoType.small(), color = tone.muted(p, t))
-                    }
-                }
-            },
-            right = {
                 val active = state.tab == LibraryTab.Artists
-                val tone = if (active) BentoTone.Leaf else BentoTone.Surface
+                val tone = if (active) BentoTone.Deep else BentoTone.Warm
                 BentoTile(
                     Modifier.weight(1f),
                     tone = tone,
@@ -152,10 +134,24 @@ internal fun BentoLibrary(
                     onClick = { model.selectTab(LibraryTab.Artists) },
                     clickLabel = "Show artists",
                 ) {
-                    BentoTileLabel("View", tone = tone)
-                    Spacer(Modifier.height(2.dp))
                     Text("Artists", style = BentoType.tileName(), color = tone.content(p, t), maxLines = 1)
                     totals[LibraryTab.Artists]?.let { cnt ->
+                        Text("$cnt", style = BentoType.small(), color = tone.muted(p, t))
+                    }
+                }
+            },
+            right = {
+                val active = state.tab == LibraryTab.Albums
+                val tone = if (active) BentoTone.Deep else BentoTone.Sun
+                BentoTile(
+                    Modifier.weight(1f),
+                    tone = tone,
+                    small = true,
+                    onClick = { model.selectTab(LibraryTab.Albums) },
+                    clickLabel = "Show albums",
+                ) {
+                    Text("Albums", style = BentoType.tileName(), color = tone.content(p, t), maxLines = 1)
+                    totals[LibraryTab.Albums]?.let { cnt ->
                         Text("$cnt", style = BentoType.small(), color = tone.muted(p, t))
                     }
                 }
@@ -230,8 +226,10 @@ private fun BentoLibraryNote(text: String) {
 @Composable
 private fun BentoAlbumGrid(state: LibraryState, model: LibraryViewModel, open: Opener) {
     val p = LocalPalette.current
+    val t = bentoTones()
     val repo = LocalRepository.current
     val grid = rememberLazyGridState()
+    val rotation = remember { listOf(BentoTone.Sun, BentoTone.Bloom, BentoTone.Warm, BentoTone.Leaf, BentoTone.Sky) }
     LaunchedEffect(grid, state.nextCursor) {
         snapshotFlow { grid.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0 }
             .collect { last -> if (last >= grid.layoutInfo.totalItemsCount - 6) model.loadMore() }
@@ -246,9 +244,10 @@ private fun BentoAlbumGrid(state: LibraryState, model: LibraryViewModel, open: O
     ) {
         items(state.albums.size, key = { state.albums[it].id }) { i ->
             val album = state.albums[i]
+            val tone = rotation[i % rotation.size]
             BentoTile(
                 Modifier.animateItem().bentoTileEnter(i, "bento-lib-albums").semantics(mergeDescendants = true) {},
-                tone = BentoTone.Surface,
+                tone = tone,
                 small = true,
                 padding = 10.dp,
                 onClick = { open.album(album.key, album.artist, album.name, album.id, album.year) },
@@ -262,10 +261,10 @@ private fun BentoAlbumGrid(state: LibraryState, model: LibraryViewModel, open: O
                     rect = true,
                 )
                 Spacer(Modifier.height(8.dp))
-                Text(album.name, style = BentoType.rowTitle(), color = p.text, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(album.name, style = BentoType.rowTitle(), color = tone.content(p, t), maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(
                     listOfNotNull(album.artist.ifBlank { null }, album.year?.toString()).joinToString(" · "),
-                    style = BentoType.small(), color = p.textMuted, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    style = BentoType.small(), color = tone.muted(p, t), maxLines = 1, overflow = TextOverflow.Ellipsis,
                 )
             }
         }
@@ -275,69 +274,54 @@ private fun BentoAlbumGrid(state: LibraryState, model: LibraryViewModel, open: O
 @Composable
 private fun BentoArtistRows(state: LibraryState, model: LibraryViewModel, open: Opener, list: LazyListState) {
     val p = LocalPalette.current
+    val t = bentoTones()
     val repo = LocalRepository.current
-    val play = LocalPlayActions.current
-    var menuArtist by remember { mutableStateOf<Triple<String, String, String?>?>(null) }
+    val grid = rememberLazyGridState()
+    val rotation = remember { listOf(BentoTone.Warm, BentoTone.Bloom, BentoTone.Leaf, BentoTone.Sun, BentoTone.Sky) }
 
-    menuArtist?.let { (name, id, art) ->
-        BentoActionSheet(
-            eyebrow = "Artist",
-            title = name,
-            cover = { Cover(art, Modifier.size(54.dp), circle = true) },
-            items = listOf(
-                Triple("Play", BentoIcons.Play) { play.playArtist(id, shuffle = false) },
-                Triple("Shuffle", BentoIcons.Shuffle) { play.playArtist(id, shuffle = true) },
-                Triple("Play next", BentoIcons.Queue) { play.queueArtist(id, next = true) },
-                Triple("Add to queue", BentoIcons.Queue) { play.queueArtist(id, next = false) },
-            ),
-            onDismiss = { menuArtist = null },
-        )
+    LaunchedEffect(grid, state.nextCursor) {
+        snapshotFlow { grid.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0 }
+            .collect { last -> if (last >= grid.layoutInfo.totalItemsCount - 9) model.loadMore() }
     }
 
-    LaunchedEffect(list, state.nextCursor) {
-        snapshotFlow { list.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0 }
-            .collect { last -> if (last >= list.layoutInfo.totalItemsCount - 6) model.loadMore() }
-    }
-
-    LazyColumn(
-        Modifier.fillMaxSize(),
-        state = list,
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(3),
+        state = grid,
+        modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = Side, end = Side, bottom = 24.dp + LocalBottomClearance.current),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        itemsIndexed(state.artists, key = { _, it -> it.id }) { i, artist ->
+        items(state.artists.size, key = { state.artists[it].id }) { i ->
+            val artist = state.artists[i]
             val artUrl = artist.artworkUrl?.let { repo.absolute(it) }
-            val meta = listOfNotNull(
-                artist.albumCount.takeIf { it > 0 }?.let { plural(it, "album") },
-                artist.plays?.takeIf { it > 0 }?.let { plural(it, "play") },
-            ).joinToString(" · ")
+            val tone = rotation[i % rotation.size]
+            val meta = artist.albumCount.takeIf { it > 0 }?.let { plural(it, "album") } ?: ""
             BentoTile(
-                Modifier.animateItem().bentoTileEnter(i, "bento-lib-artists").fillMaxWidth(),
-                tone = BentoTone.Surface,
+                Modifier.animateItem().bentoTileEnter(i, "bento-lib-artists").semantics(mergeDescendants = true) {},
+                tone = tone,
                 small = true,
-                padding = 10.dp,
+                padding = 8.dp,
+                onClick = { open.artist(artist.name, artist.key, artist.id, null) },
+                clickLabel = "Open ${artist.name}",
             ) {
-                BentoRow(
-                    title = artist.name,
-                    subtitle = meta.ifBlank { null },
-                    onClick = { open.artist(artist.name, artist.key, artist.id, null) },
-                    lead = { Cover(artUrl, Modifier.size(48.dp), circle = true) },
-                    trail = {
-                        BentoIconButton(
-                            BentoIcons.More,
-                            "Play or queue ${artist.name}",
-                            { menuArtist = Triple(artist.name, artist.id, artUrl) },
-                            small = true,
-                        )
-                    },
+                Cover(
+                    artUrl,
+                    Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(14.dp)),
+                    rect = true,
                 )
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    artist.name,
+                    style = BentoType.small().copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Bold),
+                    color = tone.content(p, t),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (meta.isNotEmpty()) {
+                    Text(meta, style = BentoType.tileLabel(), color = tone.muted(p, t), maxLines = 1)
+                }
             }
-        }
-        if (state.loading) {
-            item { BentoSkeleton(Modifier.fillMaxWidth().height(72.dp), small = true) }
-        }
-        if (state.failure != null) {
-            item { BentoBanner("Could not load more", state.failure.message, onRetry = model::loadMore) }
         }
     }
 }

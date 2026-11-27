@@ -88,6 +88,8 @@ import java.time.format.DateTimeFormatter
  * Every row, switch, menu, and choice is shared with the Standard screens.
  */
 
+private val LocalBentoSettingsTone = androidx.compose.runtime.compositionLocalOf { BentoTone.Surface }
+
 @Composable
 internal fun BentoSettingsRow(
     icon: ImageVector,
@@ -100,10 +102,18 @@ internal fun BentoSettingsRow(
     divider: Boolean,
 ) {
     val p = LocalPalette.current
-    val tone = if (stateColor == MaterialTheme.colorScheme.onSurfaceVariant) p.textMuted else stateColor
+    val t = bentoTones()
+    val tileTone = LocalBentoSettingsTone.current
+    val onTone = tileTone != BentoTone.Surface
+    val fg = tileTone.content(p, t)
+    val muted = tileTone.muted(p, t)
+    val tone = if (stateColor == MaterialTheme.colorScheme.onSurfaceVariant) muted else stateColor
+    val dividerColor = if (onTone) Color.Black.copy(alpha = 0.08f) else p.edge
+    val circleFill = if (onTone) t.chip else p.ink
+    val iconTint = if (onTone) t.onTone else p.control
     val interaction = remember { MutableInteractionSource() }
     Column(modifier.fillMaxWidth()) {
-        if (divider) Box(Modifier.fillMaxWidth().height(1.dp).background(p.edge))
+        if (divider) Box(Modifier.fillMaxWidth().height(1.dp).background(dividerColor))
         Row(
             Modifier.fillMaxWidth()
                 .heightIn(min = BentoRules.ROW_MIN.dp)
@@ -114,26 +124,26 @@ internal fun BentoSettingsRow(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
-                Modifier.size(40.dp).clip(CircleShape).background(p.ink),
+                Modifier.size(40.dp).clip(CircleShape).background(circleFill),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(icon, null, tint = p.control, modifier = Modifier.size(20.dp))
+                Icon(icon, null, tint = iconTint, modifier = Modifier.size(20.dp))
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(title, style = BentoType.rowTitle(), color = p.text, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(title, style = BentoType.rowTitle(), color = fg, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 if (state.isNotEmpty()) {
                     Text(state, style = BentoType.small(), color = tone, maxLines = 3, overflow = TextOverflow.Ellipsis)
                 }
             }
             if (trailing != null) trailing()
-            else if (onClick != null) Icon(BentoIcons.Chevron, null, tint = p.textMuted, modifier = Modifier.size(BentoRules.ICON_INLINE.dp))
+            else if (onClick != null) Icon(BentoIcons.Chevron, null, tint = muted, modifier = Modifier.size(BentoRules.ICON_INLINE.dp))
         }
     }
 }
 
 @Composable
 private fun BentoSettingsGroup(
-    title: String,
+    title: String?,
     index: Int,
     tone: BentoTone = BentoTone.Surface,
     content: @Composable ColumnScope.() -> Unit,
@@ -142,8 +152,14 @@ private fun BentoSettingsGroup(
         Modifier.fillMaxWidth().padding(horizontal = BentoRules.SIDE_MARGIN.dp).bentoTileEnter(index, "settings"),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        BentoEyebrow(title, Modifier.padding(start = 8.dp))
-        BentoTile(Modifier.fillMaxWidth(), tone = tone, content = content)
+        if (!title.isNullOrBlank()) {
+            BentoEyebrow(title, Modifier.padding(start = 8.dp))
+        }
+        BentoTile(Modifier.fillMaxWidth(), tone = tone) {
+            androidx.compose.runtime.CompositionLocalProvider(LocalBentoSettingsTone provides tone) {
+                content()
+            }
+        }
     }
 }
 
@@ -206,12 +222,12 @@ internal fun BentoSettingsPage(
             }
         }
 
-        BentoSettingsGroup("Sound and look", index = 0) {
+        BentoSettingsGroup(null, index = 0, tone = BentoTone.Warm) {
             AppearanceRow(container.appearance, onAppearance, divider = false)
             app.discair.ui.PlaybackSettings(container, onEqualizer, onCrossfade, app.discair.ui.PlaybackShow.LookAndSound)
         }
 
-        BentoSettingsGroup("Library", index = 1) {
+        BentoSettingsGroup(null, index = 1, tone = BentoTone.Leaf) {
             val serverLine = SettingsRules.serverLine(state.librarian, state.navidrome)
             SettingsRow(
                 BentoIcons.Server, "Server", serverLine.text, onClick = onServer, divider = false,
@@ -224,20 +240,21 @@ internal fun BentoSettingsPage(
             app.discair.ui.LibrarySettings()
         }
 
-        BentoSettingsGroup("Listening", index = 2) {
+        BentoSettingsGroup(null, index = 2, tone = BentoTone.Sky) {
             RadioSettings(divider = false)
             ListenBrainzSettings()
             BlocklistSettings()
         }
 
-        BentoSettingsGroup("Playback", index = 3) {
+        BentoSettingsGroup(null, index = 3, tone = BentoTone.Sun) {
             app.discair.ui.PlaybackSettings(container, onEqualizer, onCrossfade, app.discair.ui.PlaybackShow.Rest)
         }
 
-        BentoSettingsGroup("Account", index = 4) {
+        BentoSettingsGroup(null, index = 4, tone = BentoTone.Bloom) {
             SettingsRow(BentoIcons.Refresh, "Check connection", "Ask both servers again", onClick = { model.recheck() }, divider = false)
             SettingsRow(BentoIcons.Server, "Edit servers", "Addresses and sign-in", onClick = { model.editServers() })
-            Box(Modifier.fillMaxWidth().height(1.dp).background(p.edge))
+            Box(Modifier.fillMaxWidth().height(1.dp).background(Color.Black.copy(alpha = 0.08f)))
+            val t = bentoTones()
             val signOutInteraction = remember { MutableInteractionSource() }
             Row(
                 Modifier.fillMaxWidth()
@@ -249,14 +266,14 @@ internal fun BentoSettingsPage(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Box(
-                    Modifier.size(40.dp).clip(CircleShape).background(p.dangerDim),
+                    Modifier.size(40.dp).clip(CircleShape).background(t.chip),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(BentoIcons.SignOut, null, tint = p.chartRedText, modifier = Modifier.size(20.dp))
+                    Icon(BentoIcons.SignOut, null, tint = t.onTone, modifier = Modifier.size(20.dp))
                 }
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text("Sign out", style = BentoType.rowTitle(), color = p.chartRedText)
-                    Text("Removes both servers from this phone", style = BentoType.small(), color = p.textMuted)
+                    Text("Sign out", style = BentoType.rowTitle(), color = t.onTone)
+                    Text("Removes both servers from this phone", style = BentoType.small(), color = t.onToneMuted)
                 }
             }
         }
@@ -508,44 +525,32 @@ private fun BentoPaletteSwatch(
         modifier
             .bentoPress(interaction)
             .clip(shape)
-            .background(p.surface)
+            .background(theme.ink)
             .then(if (selected) Modifier.border(2.5.dp, p.control, shape) else Modifier)
             .selectable(selected = selected, interactionSource = interaction, indication = null, role = Role.RadioButton, onClick = onClick)
             .semantics(mergeDescendants = true) {
                 contentDescription = "${theme.label}, ${if (theme.light) "light" else "dark"}${if (selected) ", selected" else ""}"
             }
-            .padding(10.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+            .padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        val previewShape = RoundedCornerShape(14.dp)
-        Column(
-            Modifier.fillMaxWidth().clip(previewShape).background(theme.ink).padding(8.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    val dots = if (tones != null) listOf(tones.warm, tones.sun, tones.leaf, tones.bloom) else listOf(theme.surface, theme.control, theme.accent)
-                    dots.forEach { dot ->
-                        Box(Modifier.size(14.dp).clip(CircleShape).background(dot))
-                    }
-                }
-                Text("Aa", color = theme.text, style = BentoType.tileName())
-            }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                Box(Modifier.weight(1f).height(14.dp).clip(RoundedCornerShape(7.dp)).background(theme.surface))
-                Box(Modifier.weight(0.55f).height(14.dp).clip(RoundedCornerShape(7.dp)).background(theme.control))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+            val pills = if (tones != null) listOf(tones.warm, tones.sun, tones.leaf, tones.bloom, tones.sky)
+            else listOf(theme.surface, theme.raised, theme.control, theme.accent)
+            pills.forEach { fill ->
+                Box(Modifier.weight(1f).height(26.dp).clip(RoundedCornerShape(8.dp)).background(fill))
             }
         }
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
             Column(Modifier.weight(1f)) {
-                Text(theme.label, style = BentoType.rowTitle(), color = p.text, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(if (theme.light) "Day" else "Night", style = BentoType.tileLabel(), color = p.textMuted)
+                Text(theme.label.removePrefix("Bento · "), style = BentoType.tileName(), color = theme.text, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(
+                    if (theme.light) "Day" else "Night",
+                    style = BentoType.tileLabel(),
+                    color = theme.textMuted,
+                )
             }
-            if (selected) {
-                Box(Modifier.size(22.dp).clip(CircleShape).background(p.control), contentAlignment = Alignment.Center) {
-                    Icon(BentoIcons.Check, null, tint = p.onControl, modifier = Modifier.size(14.dp))
-                }
-            }
+            Box(Modifier.size(20.dp).clip(CircleShape).background(theme.control))
         }
     }
 }
