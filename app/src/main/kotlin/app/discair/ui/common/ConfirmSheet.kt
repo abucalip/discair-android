@@ -112,6 +112,7 @@ fun ConfirmSheet(spec: ConfirmSpec, onKeep: () -> Unit, onConfirm: () -> Unit) {
         }
         // Index (mockup sheets, frame 3): a mono eyebrow, the question as a Lead title, the sentence, Keep and the red destructive button (IndexSheets.kt).
         if (isIndex()) { IndexConfirmBody(spec, onKeep, onConfirm); return@ModalBottomSheet }
+        if (isBento()) { BentoConfirmBody(spec, onKeep, onConfirm); return@ModalBottomSheet }
         Column(
             Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),

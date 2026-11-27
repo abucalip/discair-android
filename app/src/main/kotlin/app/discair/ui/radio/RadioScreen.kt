@@ -142,6 +142,15 @@ fun RadioScreen(onBack: () -> Unit, onOpenHeard: () -> Unit, onOpenPlayer: () ->
         )
         return
     }
+    // Bento draws its own Radio page (BentoRadio.kt), with Stations and Heard chips.
+    if (app.discair.ui.common.isBento()) {
+        BentoRadioPage(
+            onBack, stations.state, stations.reload, message,
+            favourite = { favourites[it.id] ?: it.favourite }, now = { live[it.id] }, onAirId = onAir.stationId, playing = playing,
+            onPlay = playStation, onFavourite = { toggleFavourite(it, favourites[it.id] ?: it.favourite) },
+        )
+        return
+    }
     // Flow draws its own page the same way (FlowRadio.kt).
     if (app.discair.ui.common.isFlow()) {
         FlowStations(

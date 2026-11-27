@@ -136,6 +136,11 @@ fun NavIsland(
         app.discair.ui.common.IndexNavBar(deckTheme, homeSelected, discoverSelected, librarySelected, onHome, onDiscover, onLibrary, onSearch, modifier)
         return
     }
+    // Bento: a dark floating pill bar (Home, Library, Discover, Search) with an expanding active control pill.
+    if (deckTheme.layout == app.discair.ui.theme.Layout.Bento) {
+        app.discair.ui.common.BentoNavBar(deckTheme, homeSelected, discoverSelected, librarySelected, onHome, onDiscover, onLibrary, onSearch, modifier)
+        return
+    }
     // Sticker Wall: a floating pill (Search, Home, Library, Player) in the owner's theme.
     if (deckTheme.layout == app.discair.ui.theme.Layout.StickerWall) {
         val reduced = app.discair.ui.theme.rememberReducedMotion()

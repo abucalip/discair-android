@@ -315,6 +315,10 @@ internal fun LibraryLine(owned: Boolean) {
 /** A card: padded 16, the app's panel. [raised] sets it on the raised ground. */
 @Composable
 internal fun InfoCard(modifier: Modifier = Modifier, raised: Boolean = false, fill: Boolean = false, content: @Composable ColumnScope.() -> Unit) {
+    if (app.discair.ui.common.isBento()) {
+        app.discair.ui.common.BentoTile(modifier.fillMaxWidth(), tone = app.discair.ui.common.BentoTone.Surface, small = true, content = content)
+        return
+    }
     Panel(modifier.fillMaxWidth()) {
         Column(
             Modifier.fillMaxWidth().then(if (fill) Modifier.fillMaxHeight() else Modifier).then(if (raised) Modifier.background(Ink.Raised) else Modifier).padding(16.dp),
@@ -326,8 +330,13 @@ internal fun InfoCard(modifier: Modifier = Modifier, raised: Boolean = false, fi
 /** A plain square with an icon, for a step that has no picture to look up. */
 @Composable
 internal fun PathTile(icon: ImageVector, size: Int) {
+    val radius = when {
+        app.discair.ui.common.isIndex() -> 0.dp
+        app.discair.ui.common.isBento() -> 14.dp
+        else -> 4.dp
+    }
     Box(
-        Modifier.size(size.dp).clip(RoundedCornerShape(if (app.discair.ui.common.isIndex()) 0.dp else 4.dp)).background(Ink.Raised),
+        Modifier.size(size.dp).clip(RoundedCornerShape(radius)).background(Ink.Raised),
         contentAlignment = Alignment.Center,
     ) { Icon(icon, contentDescription = null, modifier = Modifier.size((size / 2).dp)) }
 }

@@ -123,11 +123,19 @@ fun ArtistPathsSheet(artistName: String, mbid: String, open: Opener, onDismiss: 
         // Back with a step open closes the step; Back with none open closes the sheet.
         BackHandler(enabled = step in stops.indices) { step = -1 }
         Box(Modifier.fillMaxWidth().weight(1f)) { // the sheet height left after its handle; a fixed fraction overflowed the Soft Brut outline
-            PathList(
-                artistName, mbid, kind, state, step, lists.getValue(kind), go,
-                onKind = { step = -1; kindWire = it.wire },
-                onStep = { step = it }, onRetry = { attempt++ },
-            )
+            if (app.discair.ui.common.isBento()) {
+                BentoArtistPathList(
+                    artistName, mbid, kind, state, step, lists.getValue(kind), go,
+                    onKind = { step = -1; kindWire = it.wire },
+                    onStep = { step = it }, onRetry = { attempt++ },
+                )
+            } else {
+                PathList(
+                    artistName, mbid, kind, state, step, lists.getValue(kind), go,
+                    onKind = { step = -1; kindWire = it.wire },
+                    onStep = { step = it }, onRetry = { attempt++ },
+                )
+            }
         }
     }
 }

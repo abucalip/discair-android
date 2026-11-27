@@ -67,22 +67,32 @@ fun StatsScreen(onBack: () -> Unit) {
         val flow = isFlow() // Flow: its own bar, large title, capsule chips and white cards (FlowStats.kt)
         val gallery = isGallery() // Gallery: a page bar, a catalogue line over the title, a word switch and hairline sections (GalleryStats.kt)
         val index = app.discair.ui.common.isIndex() // Index: a page bar, the Display title, the figures under heavy rules, mono range tabs, ruled sections (IndexStats.kt)
-        if (index) app.discair.ui.common.IndexPageBar("Library", onBack)
+        val bento = app.discair.ui.common.isBento() // Bento: page bar, stat tiles, chip tabs, rounded chart tiles (BentoStats.kt)
+        if (bento) app.discair.ui.common.BentoPageBar(onBack = onBack, title = "Library")
+        else if (index) app.discair.ui.common.IndexPageBar("Library", onBack)
         else if (gallery) app.discair.ui.common.GalleryPageBar("Library stats", onBack) else if (softBrut) CoverStackTopBar(onBack, emptyList(), title = "Library stats") else if (flow) FlowPageBar(onBack, emptyList(), title = "Library stats") else BackBar(onBack)
         LazyColumn(
             Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = if (gallery || index) 0.dp else 16.dp, end = if (gallery || index) 0.dp else if (softBrut) 19.dp else 16.dp, top = 0.dp, bottom = 24.dp + app.discair.ui.LocalBottomClearance.current),
-            verticalArrangement = Arrangement.spacedBy(if (gallery || index) 0.dp else 16.dp),
+            contentPadding = PaddingValues(start = if (gallery || index || bento) 0.dp else 16.dp, end = if (gallery || index || bento) 0.dp else if (softBrut) 19.dp else 16.dp, top = 0.dp, bottom = 24.dp + app.discair.ui.LocalBottomClearance.current),
+            verticalArrangement = Arrangement.spacedBy(if (gallery || index) 0.dp else if (bento) app.discair.ui.common.BentoRules.GRID_GAP.dp else 16.dp),
         ) {
             item(key = "title") {
-                if (index) app.discair.ui.common.IndexPageHead("Stats")
+                if (bento) Text(
+                    "Library stats",
+                    style = app.discair.ui.common.BentoType.pageTitle(),
+                    color = app.discair.ui.theme.LocalPalette.current.text,
+                    modifier = Modifier.padding(horizontal = app.discair.ui.common.BentoRules.SIDE_MARGIN.dp, vertical = 4.dp).semantics { heading() },
+                )
+                else if (index) app.discair.ui.common.IndexPageHead("Stats")
                 else if (gallery) app.discair.ui.common.GalleryPageHead("Library stats", eyebrow = "Library")
                 else if (softBrut) CoverStackTitle("Library stats", maxLines = 1)
                 else if (flow) FlowLargeTitle("Library stats")
                 else Text("Library stats", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.semantics { heading() })
             }
-            if (index) item(key = "figures") { IndexStatsFigures(read?.total) }
-            if (index) item(key = "ranges") { IndexRanges(range) { range = it } }
+            if (bento) item(key = "figures") { BentoStatsFigures(read?.total) }
+            else if (index) item(key = "figures") { IndexStatsFigures(read?.total) }
+            if (bento) item(key = "ranges") { BentoRanges(range) { range = it } }
+            else if (index) item(key = "ranges") { IndexRanges(range) { range = it } }
             else if (gallery) item(key = "ranges") { GalleryRanges(range) { range = it } }
             else if (softBrut) item(key = "ranges") { CoverStackRanges(range) { range = it } }
             else if (flow) item(key = "ranges") { FlowRanges(range) { range = it } }
@@ -117,7 +127,7 @@ private fun CollectionCard(
         }
         if (series != null) {
             val today = StatsRules.dateWords(now.atZone(ZoneOffset.UTC).toLocalDate())
-            if (!isCoverStack() && !isFlow() && !isGallery() && !app.discair.ui.common.isIndex()) Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (!isCoverStack() && !isFlow() && !isGallery() && !app.discair.ui.common.isIndex() && !app.discair.ui.common.isBento()) Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
                     app.discair.ui.common.ChartRules.formatCount(series.total.toDouble()), style = discairType().displayMetric,
                     modifier = Modifier.semantics { contentDescription = "${series.total} albums on $today" },
@@ -131,7 +141,9 @@ private fun CollectionCard(
             points = series?.points.orEmpty(),
             state = StatsRules.collectionState(series, read, loading),
             // Soft Brut puts the figure under the eyebrow, inside the chart's frame (mockup frame 2).
-            header = if (isCoverStack() && series != null) ({
+            header = if (app.discair.ui.common.isBento() && series != null) ({
+                BentoFigure(app.discair.ui.common.ChartRules.formatCount(series.total.toDouble()), "albums on " + StatsRules.dateWords(now.atZone(ZoneOffset.UTC).toLocalDate()))
+            }) else if (isCoverStack() && series != null) ({
                 CoverStackFigure(app.discair.ui.common.ChartRules.formatCount(series.total.toDouble()), "albums on " + StatsRules.dateWords(now.atZone(ZoneOffset.UTC).toLocalDate()))
             }) else if (isGallery() && series != null) ({
                 GalleryFigure(app.discair.ui.common.ChartRules.formatCount(series.total.toDouble()), "albums on " + StatsRules.dateWords(now.atZone(ZoneOffset.UTC).toLocalDate()))
@@ -187,6 +199,7 @@ private fun TimeOfDayCard(taste: app.discair.model.TasteResponse?, loading: Bool
 /** A stats card: the Standard dashboard card, Soft Brut's outlined one, or Flow's white one. */
 @Composable
 private fun StatsCard(key: String, content: @Composable () -> Unit) {
-    if (app.discair.ui.common.isIndex()) IndexStatsCard(key, content)
+    if (app.discair.ui.common.isBento()) BentoStatsCard(content)
+    else if (app.discair.ui.common.isIndex()) IndexStatsCard(key, content)
     else if (isGallery()) GalleryStatsCard(content) else if (isCoverStack()) app.discair.ui.discover.CoverStackCardBox(content = content) else if (isFlow()) FlowStatsCard(content) else DashCard(content = content)
 }

@@ -69,6 +69,10 @@ fun InsightsPage(
         IndexInsights(response, hidden, onDismiss, taste, tasteLoaded, showTaste, open)
         return
     }
+    if (app.discair.ui.common.isBento() && open != null) {
+        BentoInsights(response, hidden, onDismiss, taste, tasteLoaded, showTaste, open)
+        return
+    }
     if (app.discair.ui.common.isGallery() && open != null) {
         GalleryInsights(response, hidden, onDismiss, taste, tasteLoaded, showTaste, open)
         return

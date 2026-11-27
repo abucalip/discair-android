@@ -147,6 +147,7 @@ fun Button(
     if (isFlow()) { FlowButton(FlowKind.Primary, onClick, modifier, enabled, shape, colors, contentPadding, interactionSource, content); return }
     if (isGallery()) { GalleryButtonBody(GalleryButtonKind.Primary, onClick, modifier, enabled, content = content); return }
     if (isIndex()) { IndexButtonBody(IndexButtonKind.Primary, onClick, modifier, enabled, content = content); return }
+    if (isBento()) { BentoButtonBody(BentoButtonKind.Primary, onClick, modifier, enabled, content = content); return }
     if (!LocalPalette.current.brutal) {
         androidx.compose.material3.Button(onClick, modifier, enabled, shape ?: ButtonDefaults.shape, colors ?: ButtonDefaults.buttonColors(), elevation, border, contentPadding, interactionSource, content)
         return
@@ -164,6 +165,7 @@ fun OutlinedButton(
     if (isFlow()) { FlowButton(FlowKind.Tonal, onClick, modifier, enabled, shape, colors, contentPadding, interactionSource, content); return }
     if (isGallery()) { GalleryButtonBody(GalleryButtonKind.Outlined, onClick, modifier, enabled, content = content); return }
     if (isIndex()) { IndexButtonBody(IndexButtonKind.Ghost, onClick, modifier, enabled, content = content); return }
+    if (isBento()) { BentoButtonBody(BentoButtonKind.Outline, onClick, modifier, enabled, content = content); return }
     if (!LocalPalette.current.brutal) {
         androidx.compose.material3.OutlinedButton(onClick, modifier, enabled, shape ?: ButtonDefaults.outlinedShape, colors ?: ButtonDefaults.outlinedButtonColors(), elevation, border ?: ButtonDefaults.outlinedButtonBorder(enabled), contentPadding, interactionSource, content)
         return
@@ -181,6 +183,7 @@ fun FilledTonalButton(
     if (isFlow()) { FlowButton(FlowKind.Tonal, onClick, modifier, enabled, shape, colors, contentPadding, interactionSource, content); return }
     if (isGallery()) { GalleryButtonBody(GalleryButtonKind.Outlined, onClick, modifier, enabled, content = content); return }
     if (isIndex()) { IndexButtonBody(IndexButtonKind.Ghost, onClick, modifier, enabled, content = content); return }
+    if (isBento()) { BentoButtonBody(BentoButtonKind.Outline, onClick, modifier, enabled, content = content); return }
     if (!LocalPalette.current.brutal) {
         androidx.compose.material3.FilledTonalButton(onClick, modifier, enabled, shape ?: ButtonDefaults.filledTonalShape, colors ?: ButtonDefaults.filledTonalButtonColors(), elevation, border, contentPadding, interactionSource, content)
         return
@@ -250,6 +253,22 @@ fun OutlinedTextField(
     shape: Shape? = null, colors: TextFieldColors? = null,
 ) {
     val p = LocalPalette.current
+    if (isBento()) {
+        // Bento: 48dp pill on `surface` with a 2dp `control` ring when focused (BENTO_THEME.md 7.2).
+        val clear = Color.Transparent
+        androidx.compose.material3.OutlinedTextField(
+            value, onValueChange, modifier.heightIn(min = BentoRules.SEARCH_HEIGHT.dp), enabled, readOnly,
+            BentoType.body().copy(color = p.text), label, placeholder, leadingIcon, trailingIcon, null, null,
+            supportingText, isError, visualTransformation, keyboardOptions, keyboardActions, singleLine, maxLines, minLines,
+            interactionSource, shape ?: RoundedCornerShape(24.dp),
+            colors ?: androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = p.surface, unfocusedContainerColor = p.surface, disabledContainerColor = p.raised, errorContainerColor = p.surface,
+                focusedBorderColor = if (isError) p.chartRedText else p.control, unfocusedBorderColor = if (isError) p.chartRedText else clear,
+                disabledBorderColor = clear, errorBorderColor = p.chartRedText, cursorColor = p.control,
+            ),
+        )
+        return
+    }
     if (isIndex()) {
         // Index: a square 52dp field on `surface` with a 2dp `text` outline inside it, Inter 600 17 (index.css `.field`); the outline turns `chartRedText` on an error.
         val clear = Color.Transparent
@@ -460,6 +479,7 @@ fun LinearProgressIndicator(
     if (isFlow()) { FlowProgress(progress(), modifier); return }
     if (isGallery()) { GalleryProgress(progress(), modifier); return }
     if (isIndex()) { IndexProgress(progress(), modifier); return }
+    if (isBento()) { BentoProgress(progress(), modifier); return }
     if (!LocalPalette.current.brutal) {
         androidx.compose.material3.LinearProgressIndicator(progress, modifier, color, trackColor)
         return
@@ -472,6 +492,7 @@ fun LinearProgressIndicator(modifier: Modifier = Modifier, color: Color = Progre
     if (isFlow()) { androidx.compose.material3.LinearProgressIndicator(modifier.height(4.dp).clip(RoundedCornerShape(2.dp)), LocalPalette.current.accent, LocalPalette.current.raised); return }
     if (isGallery()) { androidx.compose.material3.LinearProgressIndicator(modifier.height(1.5.dp), LocalPalette.current.text, LocalPalette.current.edge); return }
     if (isIndex()) { androidx.compose.material3.LinearProgressIndicator(modifier.height(IndexRules.SEEK.dp), LocalPalette.current.accent, LocalPalette.current.edge, strokeCap = androidx.compose.ui.graphics.StrokeCap.Butt); return }
+    if (isBento()) { androidx.compose.material3.LinearProgressIndicator(modifier.height(BentoRules.SEEK_HEIGHT.dp).clip(RoundedCornerShape(3.dp)), LocalPalette.current.control, LocalPalette.current.raised); return }
     if (!LocalPalette.current.brutal) {
         androidx.compose.material3.LinearProgressIndicator(modifier, color, trackColor)
         return
@@ -507,6 +528,7 @@ fun SnackbarHost(hostState: SnackbarHostState, modifier: Modifier = Modifier) {
     if (isFlow()) { androidx.compose.material3.SnackbarHost(hostState, modifier) { data -> FlowSnackbar(data) }; return }
     if (isGallery()) { GallerySnackbarHost(hostState, modifier); return }
     if (isIndex()) { IndexSnackbarHost(hostState, modifier); return }
+    if (isBento()) { BentoSnackbarHost(hostState, modifier); return }
     if (!LocalPalette.current.brutal) {
         androidx.compose.material3.SnackbarHost(hostState, modifier)
         return
@@ -576,6 +598,16 @@ fun ModalBottomSheet(
         )
         return
     }
+    if (isBento()) {
+        // Bento: `surface`, 28dp top radius, 40x5 handle, fixed scrim (BENTO_THEME.md 7.3, decision B4).
+        androidx.compose.material3.ModalBottomSheet(
+            onDismissRequest, modifier.statusBarsPadding(), sheetState,
+            shape = shape ?: RoundedCornerShape(topStart = BentoRules.SHEET_TOP_RADIUS.dp, topEnd = BentoRules.SHEET_TOP_RADIUS.dp),
+            containerColor = containerColor ?: p.surface, scrimColor = BentoRules.SCRIM, tonalElevation = 0.dp,
+            dragHandle = { BentoSheetHandle() }, content = content,
+        )
+        return
+    }
     if (isFlow()) {
         // Flow: a white sheet with a 24dp top radius and a short grey handle (mockup: flow/sheets).
         androidx.compose.material3.ModalBottomSheet(
@@ -641,6 +673,22 @@ fun FilterChip(
                 androidx.compose.material3.ProvideTextStyle(IndexType.label(), {
                     Box(Modifier.drawBehind { if (selected) drawRect(p.accent, androidx.compose.ui.geometry.Offset(0f, size.height - IndexRules.SOURCE_BAR.dp.toPx()), androidx.compose.ui.geometry.Size(size.width, IndexRules.SOURCE_BAR.dp.toPx())) }.padding(vertical = 8.dp)) { label() }
                 })
+            }
+            trailingIcon?.invoke()
+        }
+        return
+    }
+    if (isBento()) {
+        val t = bentoTones()
+        val pill = RoundedCornerShape(BentoRules.CHIP_RADIUS.dp)
+        Row(
+            modifier.heightIn(min = BentoRules.CHIP_HEIGHT.dp).clip(pill).background(if (selected) t.deep else p.surface)
+                .clickable(enabled = enabled, role = Role.Checkbox, onClick = onClick).padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            leadingIcon?.invoke()
+            CompositionLocalProvider(LocalContentColor provides if (selected) t.onDeep else p.text) {
+                androidx.compose.material3.ProvideTextStyle(BentoType.chip(), label)
             }
             trailingIcon?.invoke()
         }

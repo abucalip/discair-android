@@ -98,9 +98,26 @@ fun DownloadsScreen(open: Opener) {
         val flow = app.discair.ui.common.isFlow() // Flow: its own bar, large title and white cards (FlowDownloads.kt)
         val gallery = app.discair.ui.common.isGallery() // Gallery: a page bar, a catalogue line over the title, hairline entries (GalleryDownloads.kt)
         val index = app.discair.ui.common.isIndex() // Index: a page bar, the Display title with the active count, Active / Done / Failed tabs, numbered entries (IndexDownloads.kt)
+        val bento = app.discair.ui.common.isBento() // Bento: page bar, tile tabs, rounded tracker tiles (BentoDownloads.kt)
         var indexTab by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<IndexDownloadsRules.Tab?>(null) }
         val tab = indexTab ?: jobs?.let { IndexDownloadsRules.firstTab(it) } ?: IndexDownloadsRules.Tab.Active
-        if (index) {
+        if (bento) {
+            app.discair.ui.common.BentoPageBar(onBack = open.back, title = "Downloads")
+            Text(
+                "Downloads",
+                style = app.discair.ui.common.BentoType.pageTitle(),
+                color = app.discair.ui.theme.LocalPalette.current.text,
+                modifier = Modifier.padding(horizontal = app.discair.ui.common.BentoRules.SIDE_MARGIN.dp, vertical = 4.dp),
+            )
+            jobs?.let { j ->
+                app.discair.ui.common.BentoTabs(
+                    IndexDownloadsRules.tabLabels(j),
+                    tab.ordinal,
+                    { indexTab = IndexDownloadsRules.Tab.entries[it] },
+                    Modifier.padding(horizontal = app.discair.ui.common.BentoRules.SIDE_MARGIN.dp, vertical = 8.dp),
+                )
+            }
+        } else if (index) {
             app.discair.ui.common.IndexPageBar("Downloads", open.back)
             app.discair.ui.common.IndexPageHead("Downloads", count = jobs?.let { app.discair.model.activeCount(it) }?.takeIf { it > 0 }?.toString())
             jobs?.let { j ->
@@ -112,13 +129,24 @@ fun DownloadsScreen(open: Opener) {
         } else if (softBrut) app.discair.ui.common.CoverStackTopBar(open.back, emptyList(), title = "Downloads")
         else if (flow) app.discair.ui.common.FlowPageBar(open.back, emptyList(), title = "Downloads")
         else BackBar(open.back)
-        if (gallery || index) Unit
+        if (gallery || index || bento) Unit
         else if (softBrut) app.discair.ui.common.CoverStackTitle("Downloads", Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp), maxLines = 1)
         else if (flow) app.discair.ui.common.FlowLargeTitle("Downloads", Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp))
         else PageHeading("Downloads", Modifier.padding(start = 16.dp, end = 16.dp), large = true)
-        if ((!gallery && !index) || hub.listProblem != null) StatusLine(hub, jobs)
+        if ((!gallery && !index && !bento) || hub.listProblem != null) StatusLine(hub, jobs)
         val imported = jobs.orEmpty().count { it.isImported }
-        if (index) {
+        if (bento) {
+            if (imported > 0 && tab == IndexDownloadsRules.Tab.Done) {
+                Box(Modifier.padding(horizontal = app.discair.ui.common.BentoRules.SIDE_MARGIN.dp, vertical = 4.dp)) {
+                    app.discair.ui.common.BentoButton(
+                        "Dismiss all imports",
+                        onClick = { confirm = Confirm.Imported(imported) },
+                        kind = app.discair.ui.common.BentoButtonKind.Outline,
+                        small = true,
+                    )
+                }
+            }
+        } else if (index) {
             // Index: the link sits on the Done tab, where the imports are, as a mono `accent` word.
             if (imported > 0 && tab == IndexDownloadsRules.Tab.Done) Text(
                 "DISMISS ALL IMPORTS →", color = app.discair.ui.theme.LocalPalette.current.accent, style = app.discair.ui.common.IndexType.label(),
@@ -148,11 +176,33 @@ fun DownloadsScreen(open: Opener) {
                     modifier = Modifier.padding(16.dp).heightIn(min = Target),
                 ) { Text("Try again") }
             }
-            jobs.isEmpty() && !index -> Text(
+            jobs.isEmpty() && !index && !bento -> Text(
                 "No acquisition records yet. Requests you make from a discovery page appear here.",
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(16.dp),
             )
+            bento -> {
+                val shown = IndexDownloadsRules.shown(jobs, tab)
+                if (shown.isEmpty()) {
+                    app.discair.ui.common.BentoTile(
+                        Modifier.fillMaxWidth().padding(horizontal = app.discair.ui.common.BentoRules.SIDE_MARGIN.dp, vertical = 8.dp),
+                    ) {
+                        Text(
+                            if (jobs.isEmpty()) "No acquisition records yet. Requests you make from a discovery page appear here." else "Nothing here.",
+                            style = app.discair.ui.common.BentoType.body(),
+                            color = app.discair.ui.theme.LocalPalette.current.textMuted,
+                        )
+                    }
+                } else LazyColumn(
+                    Modifier.fillMaxSize(),
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(top = 6.dp, bottom = 24.dp + app.discair.ui.LocalBottomClearance.current),
+                    verticalArrangement = Arrangement.spacedBy(app.discair.ui.common.BentoRules.GRID_GAP.dp),
+                ) {
+                    itemsIndexed(shown, key = { _, it -> it.key }) { _, job ->
+                        Column(Modifier.animateItem()) { JobRow(job, hub, now, open, onDismiss = { confirm = Confirm.One(job) }) }
+                    }
+                }
+            }
             index -> {
                 val shown = IndexDownloadsRules.shown(jobs, tab)
                 if (shown.isEmpty()) app.discair.ui.common.IndexMuted(
@@ -227,6 +277,14 @@ private fun JobRow(job: AcquisitionJob, hub: AcquisitionHub, now: Double, open: 
         } catch (e: kotlin.coroutines.cancellation.CancellationException) { throw e } catch (e: Exception) { null }
     }
     val openAlbum = { open.album(routeKey(job.artist, job.albumName), job.artist, job.albumName, null, job.year) }
+    if (app.discair.ui.common.isBento()) {
+        val arrived = job.updatedAt?.let { DateFormat.getTimeInstance(DateFormat.SHORT).format(Date((it * 1000).toLong())) }
+        BentoJobTile(
+            job, busy, job.skipSecondsLeft(now), ownedId != null, arrived, openAlbum,
+            onPlay = { ownedId?.let { play.playAlbum(it) } }, onSkip = { hub.skipSource(job) }, onRetry = { hub.retry(job) }, onDismiss = onDismiss,
+        )
+        return
+    }
     if (app.discair.ui.common.isIndex()) {
         val arrived = job.updatedAt?.let { DateFormat.getTimeInstance(DateFormat.SHORT).format(Date((it * 1000).toLong())) }
         IndexJob(

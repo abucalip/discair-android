@@ -98,7 +98,7 @@ enum class Family(val label: String) { Classic("Classic"), Brutal("Brutal") }
  */
 enum class Layout(val label: String) {
     Standard("Standard"), TapeDeck("Cassette Deck"), SheetStack("Sheet Stack"), StickerWall("Sticker Wall"),
-    CoverStack("Cover Stack"), Flow("Flow"), Gallery("Gallery"), Index("Index"),
+    CoverStack("Cover Stack"), Flow("Flow"), Gallery("Gallery"), Index("Index"), Bento("Bento"),
 }
 
 /**
@@ -690,11 +690,43 @@ object Palettes {
         layout = Layout.Index, suggestedFontId = "index",
     )
 
+    // Bento (BENTO_THEME.md 4.2): two day palettes (Sorbet, Riviera) and one night palette (Licorice), one layout.
+    // The five tile tones and bar/deep colours live in BentoTones (ui/common/BentoKit.kt), keyed by id (decision B1).
+    val Bento = Palette(
+        "bento", "Bento · Sorbet", true,
+        rail = c(0xFFFFFF), ink = c(0xF4F0E8), surface = c(0xFFFFFF), raised = c(0xEAE4D8), edge = c(0xE3DCCF), edgeStrong = c(0x8A8276),
+        text = c(0x1D1B18), textMuted = c(0x5E5850), accent = c(0xB8321A), onAccent = c(0xFFFFFF),
+        chartRed = c(0xB3261E), chartRedText = c(0xB3261E), ok = c(0x1B6B3A), caution = c(0x8A5300), info = c(0x1F5A8A),
+        chart2 = c(0x8A8276), chart3 = c(0xE3DCCF),
+        control = c(0xB8321A), onControl = c(0xFFFFFF), mat = c(0xFFFFFF), minAccentContrast = 4.5,
+        layout = Layout.Bento, suggestedFontId = "bento",
+    )
+
+    val BentoLicorice = Palette(
+        "bento_licorice", "Bento · Licorice", false,
+        rail = c(0x1C1A18), ink = c(0x121110), surface = c(0x1C1A18), raised = c(0x26231F), edge = c(0x2E2A26), edgeStrong = c(0x7A7268),
+        text = c(0xF3EEE6), textMuted = c(0xADA59A), accent = c(0xFF8E6A), onAccent = c(0x121110),
+        chartRed = c(0xFF8A73), chartRedText = c(0xFF8A73), ok = c(0x8FD6A0), caution = c(0xF2A65A), info = c(0x8FB8E8),
+        chart2 = c(0x7A7268), chart3 = c(0x3A352F),
+        control = c(0xFF8E6A), onControl = c(0x121110), mat = c(0x26231F), minAccentContrast = 4.5,
+        layout = Layout.Bento, suggestedFontId = "bento",
+    )
+
+    val BentoRiviera = Palette(
+        "bento_riviera", "Bento · Riviera", true,
+        rail = c(0xFFFFFF), ink = c(0xEFF3F1), surface = c(0xFFFFFF), raised = c(0xDDE6E3), edge = c(0xD3DEDA), edgeStrong = c(0x6E7F7B),
+        text = c(0x13201E), textMuted = c(0x4E5D5A), accent = c(0x2440C8), onAccent = c(0xFFFFFF),
+        chartRed = c(0xB3261E), chartRedText = c(0xB3261E), ok = c(0x1B6B3A), caution = c(0x7F4A00), info = c(0x1F5A8A),
+        chart2 = c(0x6E7F7B), chart3 = c(0xD3DEDA),
+        control = c(0x2440C8), onControl = c(0xFFFFFF), mat = c(0xFFFFFF), minAccentContrast = 4.5,
+        layout = Layout.Bento, suggestedFontId = "bento",
+    )
+
     /** Light themes in the order the picker shows them; the first is the default day theme. */
-    val Light: List<Palette> = listOf(Sand, Paper, Mist, Sage, Blush, BrutLavender, BrutMint, BrutLemon, BrutCream, BrutSky, BrutPoster, TapeLime, TapeCobalt, TapeTangerine, SheetDaylight, StickerPeach, SoftBrut, SoftBrutMint, SoftBrutPeach, SoftBrutSky, SoftBrutLemon, Flow, FlowForest, FlowRaspberry, FlowViolet, Gallery, GalleryCeladon, GalleryMist, GalleryBlush, GalleryButter, Index, IndexNewsprint, IndexField)
+    val Light: List<Palette> = listOf(Sand, Paper, Mist, Sage, Blush, BrutLavender, BrutMint, BrutLemon, BrutCream, BrutSky, BrutPoster, TapeLime, TapeCobalt, TapeTangerine, SheetDaylight, StickerPeach, SoftBrut, SoftBrutMint, SoftBrutPeach, SoftBrutSky, SoftBrutLemon, Flow, FlowForest, FlowRaspberry, FlowViolet, Gallery, GalleryCeladon, GalleryMist, GalleryBlush, GalleryButter, Index, IndexNewsprint, IndexField, Bento, BentoRiviera)
 
     /** Dark themes in the order the picker shows them; the first is the default night theme. */
-    val Dark: List<Palette> = listOf(Night, Amoled, Forest, Ocean, Ember, Graphite, HighContrast, BrutInk, BrutMidnight, SheetViolet, SheetAcid, SoftBrutMidnightMint, SoftBrutPlumPeach, SoftBrutNavySky, FlowEmber, FlowMoss, FlowPlum, GalleryGraphite, GalleryOxblood, GalleryMoss, IndexGraphite, IndexGraphiteBlue, IndexGraphiteCyan, IndexGraphiteMint, IndexGraphiteLime, IndexGraphiteYellow, IndexGraphiteViolet, IndexGraphitePink, IndexGraphiteCoral)
+    val Dark: List<Palette> = listOf(Night, Amoled, Forest, Ocean, Ember, Graphite, HighContrast, BrutInk, BrutMidnight, SheetViolet, SheetAcid, SoftBrutMidnightMint, SoftBrutPlumPeach, SoftBrutNavySky, FlowEmber, FlowMoss, FlowPlum, GalleryGraphite, GalleryOxblood, GalleryMoss, IndexGraphite, IndexGraphiteBlue, IndexGraphiteCyan, IndexGraphiteMint, IndexGraphiteLime, IndexGraphiteYellow, IndexGraphiteViolet, IndexGraphitePink, IndexGraphiteCoral, BentoLicorice)
 
     val All: List<Palette> = Light + Dark
 

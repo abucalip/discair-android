@@ -93,6 +93,8 @@ fun LibraryScreen(open: Opener) {
     if (app.discair.ui.common.isGallery()) { GalleryLibrary(state, model, open, list); return }
     // Index draws its own arrangement (IndexLibrary.kt) under the shell's Home bar, with its own Genres tab.
     if (app.discair.ui.common.isIndex()) { IndexLibrary(state, model, open, list); return }
+    // Bento draws its own arrangement (BentoLibrary.kt) under the shell's Bento header.
+    if (app.discair.ui.common.isBento()) { BentoLibrary(state, model, open, list); return }
 
     Column(Modifier.fillMaxSize()) {
         PageHeading("Library", Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp), large = true)

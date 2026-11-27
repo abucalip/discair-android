@@ -132,10 +132,17 @@ fun AlbumPathsSheet(albumName: String, artistName: String, albumId: String, soni
         BackHandler(enabled = step in steps.indices) { step = -1 }
         Box(Modifier.fillMaxWidth().weight(1f)) { // the sheet height left after its handle; a fixed fraction overflowed the Soft Brut outline
             val seeds = (model.answers[AlbumTab.NeighboursByEar] as? Load.Ready)?.value?.seeds ?: 0
-            AlbumPathList(
-                albumName, artistName, albumId, tab, tabs, state, seeds, step, lists.getValue(tab), go,
-                onTab = { step = -1; tabName = it.name }, onStep = { step = it }, onRetry = { attempt++ },
-            )
+            if (app.discair.ui.common.isBento()) {
+                BentoAlbumPathList(
+                    albumName, artistName, albumId, tab, tabs, state, seeds, step, lists.getValue(tab), go,
+                    onTab = { step = -1; tabName = it.name }, onStep = { step = it }, onRetry = { attempt++ },
+                )
+            } else {
+                AlbumPathList(
+                    albumName, artistName, albumId, tab, tabs, state, seeds, step, lists.getValue(tab), go,
+                    onTab = { step = -1; tabName = it.name }, onStep = { step = it }, onRetry = { attempt++ },
+                )
+            }
         }
     }
 }

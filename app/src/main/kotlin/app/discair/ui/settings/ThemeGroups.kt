@@ -9,7 +9,7 @@ import app.discair.ui.theme.Palette
  * (day and night). The three Appearance pages (Standard, Flow, Soft Brut) share this.
  */
 object ThemeGroups {
-    val All = listOf("Standard", "Flow", "Brut", "Tape", "Sheet", "Sticker", "Soft Brut", "Gallery", "Index")
+    val All = listOf("Standard", "Flow", "Brut", "Tape", "Sheet", "Sticker", "Soft Brut", "Gallery", "Index", "Bento")
     const val DEFAULT = "Standard"
 
     /** The theme a palette belongs to. Brut is the Brutal palettes that keep the standard layout. */
@@ -18,6 +18,7 @@ object ThemeGroups {
         Layout.Flow -> "Flow"
         Layout.Gallery -> "Gallery"
         Layout.Index -> "Index"
+        Layout.Bento -> "Bento"
         Layout.TapeDeck -> "Tape"
         Layout.SheetStack -> "Sheet"
         Layout.StickerWall -> "Sticker"
