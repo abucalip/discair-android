@@ -28,6 +28,7 @@ Paths are relative to the repository root.
 | Home, library, album, and artist screens | `app/src/main/kotlin/app/discair/ui/home/`, `ui/library/`, `ui/album/`, `ui/artist/` |
 | Discover, radio, search, downloads, and stats screens | `app/src/main/kotlin/app/discair/ui/discover/`, `ui/radio/`, `ui/search/`, `ui/downloads/`, `ui/stats/` |
 | Player UI, settings, shared components, and theme | `app/src/main/kotlin/app/discair/ui/player/`, `ui/settings/`, `ui/common/`, `ui/theme/` |
+| Bento theme (`Layout.Bento`) | `ui/theme/BentoMotion.kt`, `ui/common/BentoKit.kt`, `BentoIcons.kt`, `BentoShell.kt`, `ui/home/BentoHome.kt`, `BentoHomeRules.kt`, `ui/album/BentoAlbum.kt`, `BentoAlbumPaths.kt`, `ui/artist/BentoArtist.kt`, `BentoArtistPaths.kt`, `ui/BentoGenre.kt`, `ui/discover/BentoDiscover.kt`, `ui/library/BentoLibrary.kt`, `ui/search/BentoSearch.kt`, `ui/player/BentoNowPlaying.kt`, `BentoEqCrossfade.kt`, `ui/radio/BentoRadio.kt`, `ui/downloads/BentoDownloads.kt`, `ui/stats/BentoStats.kt`, `ui/settings/BentoSettings.kt` |
 
 ## Tooling and Contracts
 

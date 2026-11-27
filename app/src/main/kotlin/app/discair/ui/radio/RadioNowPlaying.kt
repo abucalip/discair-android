@@ -121,6 +121,14 @@ fun RadioNowPlayingSheet(
         }
         return
     }
+    // Bento: full-screen Bento radio player rising over the dock (BentoRadio.kt).
+    if (app.discair.ui.common.isBento()) {
+        app.discair.ui.player.BentoPlayerFrame(onDismiss) { close ->
+            androidx.activity.compose.BackHandler { close() }
+            BentoRadioNow(state, controller, radio, sleep, live, item, artwork, radioStatusText(state, live), close, onOpenHeard)
+        }
+        return
+    }
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true), containerColor = Ink.Ink, shape = RectangleShape) {
         app.discair.ui.common.TransparentNavigationBar()
         Box {

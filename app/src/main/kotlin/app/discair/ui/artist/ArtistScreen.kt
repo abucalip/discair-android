@@ -177,6 +177,18 @@ private fun ArtistContent(route: ArtistRoute, page: ArtistPage, open: Opener, li
         return
     }
 
+    // Bento: rounded tiles, in BentoArtist.kt.
+    if (app.discair.ui.common.isBento()) {
+        BentoArtistContent(
+            CoverStackArtistData(
+                route, name, sections, owned, info?.albumCount, info?.owned == true, artistId, similar, collage,
+                pathsOn && pathsMbid != null, { showPaths = true },
+            ),
+            open, list, showAllSongs, { showAllSongs = true }, showAllMissing, { showAllMissing = true },
+        )
+        return
+    }
+
     LazyColumn(Modifier.fillMaxSize(), state = list, contentPadding = PaddingValues(bottom = 32.dp + app.discair.ui.LocalBottomClearance.current)) {
         item {
             Box(

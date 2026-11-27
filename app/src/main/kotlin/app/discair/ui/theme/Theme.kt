@@ -87,8 +87,8 @@ const val MIN_PASTEL_LUMINANCE = 0.72f
 fun OnArtwork(keepBrutal: Boolean = false, content: @Composable () -> Unit) {
     val current = LocalPalette.current
     // A Brutal theme's player sheet stays in the chosen theme: its outline and hard shadow need the theme's own ground.
-    // Gallery's and Index's player and radio pages are drawn in the chosen palette, light or dark (Gallery's Lyrics page asks for this override itself when photos are behind it).
-    if (keepBrutal && (current.brutal || current.layout == Layout.Gallery || current.layout == Layout.Index)) { content(); return }
+    // Gallery's, Index's and Bento's player and radio pages are drawn in the chosen palette, light or dark (Gallery's Lyrics page asks for this override itself when photos are behind it).
+    if (keepBrutal && (current.brutal || current.layout == Layout.Gallery || current.layout == Layout.Index || current.layout == Layout.Bento)) { content(); return }
     val palette = remember(current) { if (current.light) current.overArtwork(Palettes.Night) else current }
     if (palette === current) { content(); return }
     // Material components and plain Text read the colour scheme, not Ink, so swap that too.
@@ -325,9 +325,26 @@ object FontPairs {
         )
     }
 
+    /**
+     * Bento (BENTO_THEME.md 5.2): Gabarito 800/900 for titles and numerals, Figtree 400/500/600/700 for body and UI; no mono face.
+     */
+    val Bento = run {
+        val title = FontFamily(variable(R.font.gabarito_bento, 800), variable(R.font.gabarito_bento, 900))
+        val body = FontFamily(
+            variable(R.font.figtree_bento, 400), variable(R.font.figtree_bento, 500),
+            variable(R.font.figtree_bento, 600), variable(R.font.figtree_bento, 700),
+        )
+        FontPair(
+            "bento", "Bento", "Gabarito", "Figtree",
+            title = title, titleWeight = FontWeight.ExtraBold, titleTracking = (-0.02).em, titleLineHeight = 1.06f,
+            body = body, numeral = title, numeralWeight = FontWeight.ExtraBold,
+            mono = body, monoName = "Figtree",
+        )
+    }
+
     val All: List<FontPair> = listOf(
         Discair, Editorial, Bricolage, Geometric, Transit,
-        BrutBaseline, BrutTechnical, BrutEditorial, BrutModern, BrutShout, BrutSwiss, Flow, Gallery, Index,
+        BrutBaseline, BrutTechnical, BrutEditorial, BrutModern, BrutShout, BrutSwiss, Flow, Gallery, Index, Bento,
     )
 
     fun byId(id: String?): FontPair? = All.firstOrNull { it.id == id }

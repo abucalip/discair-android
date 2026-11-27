@@ -177,6 +177,8 @@ fun NowPlayingSheet(state: PlayerUiState, controller: PlayerController, lyrics: 
     val gallery = app.discair.ui.theme.LocalPalette.current.layout == app.discair.ui.theme.Layout.Gallery
     // Index: its own full-screen page in IndexNowPlaying.kt that rises from the strip; the player, the lyrics and the queue are views 0, 1 and 2 of it.
     val index = app.discair.ui.theme.LocalPalette.current.layout == app.discair.ui.theme.Layout.Index
+    // Bento: its own full-screen page in BentoNowPlaying.kt that rises while the dock slides down.
+    val bento = app.discair.ui.theme.LocalPalette.current.layout == app.discair.ui.theme.Layout.Bento
     LaunchedEffect(coverStack) { if (coverStack && view != 0) { view = 0; lastView = 0 } }
     BackHandler(enabled = view != 0) { view = 0; lastView = 0 }
     val scope = androidx.compose.runtime.rememberCoroutineScope()
@@ -201,7 +203,7 @@ fun NowPlayingSheet(state: PlayerUiState, controller: PlayerController, lyrics: 
     val currentLine by follower.line.collectAsState()
     // Standard: a full-screen page drawn behind the status and navigation bars (no sheet gap above, no band below); every other theme keeps its sheet.
     val standard = app.discair.ui.theme.LocalPalette.current.layout == app.discair.ui.theme.Layout.Standard
-    PlayerContainer(standard, gallery, index, onDismiss, sheet) { close ->
+    PlayerContainer(standard, gallery, index, bento, onDismiss, sheet) { close ->
         val item = state.current
         if (item == null) { onDismiss(); return@PlayerContainer }
         if (standard) BackHandler { if (view != 0) { view = 0; lastView = 0 } else onDismiss() }
@@ -258,6 +260,17 @@ fun NowPlayingSheet(state: PlayerUiState, controller: PlayerController, lyrics: 
                 state, controller, view = view, onView = { view = it; lastView = it }, onClose = close,
                 onSignIn = onSignIn, onEqualizer = { eqOpen = true }, onCrossfade = { crossfadeOpen = true },
                 onOpenArtist = onOpenArtist, onOpenAlbum = onOpenAlbum, input = indexInput,
+            )
+        } else if (bento) {
+            val bentoInput = CoverStackPlayerInput(
+                if (lyricsState.songIdOrNull() == songId) lyricsState else LyricsUiState.Idle, currentLine, songId.orEmpty(),
+                { if (songId != null) lyrics.retry(songId, nextId) }, lineUi, false, false, {},
+            )
+            BackHandler { if (view != 0) { view = 0; lastView = 0 } else close() }
+            BentoPlayer(
+                state, controller, view = view, onView = { view = it; lastView = it }, onClose = close,
+                onSignIn = onSignIn, onEqualizer = { eqOpen = true }, onCrossfade = { crossfadeOpen = true },
+                onOpenArtist = onOpenArtist, onOpenAlbum = onOpenAlbum, input = bentoInput,
             )
         } else Box(if (standard) Modifier.fillMaxSize().background(ground) else Modifier) {
         if (blurred) ArtworkBackdrop(playerArtworkUrl(item.coverUrl))
@@ -418,8 +431,10 @@ fun NowPlayingSheet(state: PlayerUiState, controller: PlayerController, lyrics: 
 /** The player's frame: a full-screen dialog for [standard], the modal sheet for every other theme. Both draw [content] as the sheet content. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun PlayerContainer(standard: Boolean, gallery: Boolean, index: Boolean, onDismiss: () -> Unit, sheet: androidx.compose.material3.SheetState, content: @Composable (close: () -> Unit) -> Unit) {
-    if (index) {
+private fun PlayerContainer(standard: Boolean, gallery: Boolean, index: Boolean, bento: Boolean, onDismiss: () -> Unit, sheet: androidx.compose.material3.SheetState, content: @Composable (close: () -> Unit) -> Unit) {
+    if (bento) {
+        BentoPlayerFrame(onDismiss) { close -> content(close) }
+    } else if (index) {
         IndexPlayerFrame(onDismiss) { close -> content(close) }
     } else if (gallery) {
         app.discair.ui.player.GalleryPlayerFrame(onDismiss) { close -> content(close) }

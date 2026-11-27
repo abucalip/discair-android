@@ -68,7 +68,8 @@ fun CrossfadeScreen(container: AppContainer, onBack: (() -> Unit)?) {
     val seconds = CrossfadeSettings.sanitizeSeconds(xf.seconds)
     // Soft Brut draws its own page (CoverStackEqCrossfade.kt); the settings and the sheet's no-back case are shared.
     // Flow draws its own page (FlowEqCrossfade.kt).
-    if (app.discair.ui.common.isIndex()) IndexCrossfade(settings, xf, rate, onBack)
+    if (app.discair.ui.common.isBento()) BentoCrossfade(settings, xf, rate, onBack)
+    else if (app.discair.ui.common.isIndex()) IndexCrossfade(settings, xf, rate, onBack)
     else if (app.discair.ui.common.isGallery()) GalleryCrossfade(settings, xf, rate, onBack)
     else if (app.discair.ui.common.isFlow()) FlowCrossfade(settings, xf, rate, onBack)
     else if (app.discair.ui.common.isCoverStack()) CoverStackCrossfade(settings, xf, rate, onBack) else Column(

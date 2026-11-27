@@ -130,6 +130,18 @@ fun SeekBar(fraction: Float, enabled: Boolean, onChange: (Float) -> Unit, onFini
             drawRect(palette.accent, Offset(left, y - h / 2), androidx.compose.ui.geometry.Size((x - left).coerceAtLeast(0f), h))
             return@Canvas
         }
+        if (palette.layout == app.discair.ui.theme.Layout.Bento) {
+            // Bento: 6dp rounded `raised` track, `control` fill, 14dp `control` thumb (grows to 18dp on drag).
+            val h = app.discair.ui.common.BentoRules.SEEK_HEIGHT.dp.toPx()
+            val corner = androidx.compose.ui.geometry.CornerRadius(h / 2)
+            val left = inset
+            val width = size.width - 2 * inset
+            val x = left + width * fraction.coerceIn(0f, 1f)
+            drawRoundRect(palette.raised, Offset(left, y - h / 2), androidx.compose.ui.geometry.Size(width, h), corner)
+            drawRoundRect(palette.control, Offset(left, y - h / 2), androidx.compose.ui.geometry.Size((x - left).coerceAtLeast(0f), h), corner)
+            drawCircle(if (enabled) palette.control else palette.edgeStrong, (if (active) 9.dp else 7.dp).toPx(), Offset(x, y))
+            return@Canvas
+        }
         if (palette.layout == app.discair.ui.theme.Layout.Gallery) {
             // Gallery: a 1.5dp `edge` track, the played part in `text` and a 10dp `text` thumb (gallery.css `.seek`).
             val h = 1.5.dp.toPx()

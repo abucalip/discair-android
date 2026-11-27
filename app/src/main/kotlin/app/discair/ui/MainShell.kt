@@ -94,6 +94,7 @@ import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Badge
 import app.discair.ui.common.SnackbarHost
 import app.discair.ui.common.galleryDockMotion
+import app.discair.ui.common.bentoDockMotion
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -161,7 +162,7 @@ fun MainShell(state: UiState, model: AppViewModel, container: AppContainer) {
     var askedNotifications by rememberSaveable { mutableStateOf(false) }
     // The media notification needs this permission on Android 13; asked once, when playback first starts.
     LaunchedEffect(playerState.isPlaying) {
-        if (playerState.isPlaying && !askedNotifications &&
+        if (android.os.Build.VERSION.SDK_INT >= 33 && playerState.isPlaying && !askedNotifications &&
             context.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED
         ) {
             askedNotifications = true
@@ -220,6 +221,7 @@ fun MainShell(state: UiState, model: AppViewModel, container: AppContainer) {
     // Index pages slide: between bar pages in the bar's direction, every other move as a push (docs/plans/INDEX_THEME.md 8.2 #1 and #2).
     // The NavHost keeps the lambdas of its first composition, so the choice is read through a state that stays current when the theme is changed in Appearance.
     val indexNavNow = androidx.compose.runtime.rememberUpdatedState(app.discair.ui.common.isIndex())
+    val bentoNavNow = androidx.compose.runtime.rememberUpdatedState(app.discair.ui.common.isBento())
     val tabs = listOf(
         Tab(HomeRoute, "Home", ArtIcons.Home),
         Tab(DiscoverRoute, "Discover", ArtIcons.Disc),
@@ -315,7 +317,11 @@ fun MainShell(state: UiState, model: AppViewModel, container: AppContainer) {
         ) { padding ->
             Column(Modifier.padding(padding).fillMaxSize()) {
             // A top-level page draws its own bar and banner (TopLevelPage), so the bar leaves with the page when one opens from it.
-            if (!onTopLevel) OfflineBanner(repo.staleSince)
+            if (!onTopLevel && repo.staleSince != null) {
+                Box(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background).statusBarsPadding()) {
+                    OfflineBanner(repo.staleSince)
+                }
+            }
             val swipeThreshold = with(androidx.compose.ui.platform.LocalDensity.current) { 72.dp.toPx() }
             // On any page but Home, a drag nothing else used (carousels, rows and pagers take theirs first) to the right goes back.
             val swipe = if (!destination.isHome()) Modifier.pointerInput(Unit) {
@@ -338,6 +344,7 @@ fun MainShell(state: UiState, model: AppViewModel, container: AppContainer) {
                     when {
                         reducedMotion -> EnterTransition.None
                         indexNavNow.value -> app.discair.ui.common.IndexNav.enter(indexOf(initialState), indexOf(targetState), reducedMotion)
+                        bentoNavNow.value -> app.discair.ui.common.BentoNav.enter(reducedMotion)
                         galleryNav -> galleryIn
                         tabToTab -> fadeIn(fadePlan.arrive.toTween(fadePlan.arriveDelayMs)) +
                             slideInVertically(fadePlan.arrive.toTween(fadePlan.arriveDelayMs)) { risePx }
@@ -349,6 +356,7 @@ fun MainShell(state: UiState, model: AppViewModel, container: AppContainer) {
                     when {
                         reducedMotion -> ExitTransition.None
                         indexNavNow.value -> app.discair.ui.common.IndexNav.exit(indexOf(initialState), indexOf(targetState), reducedMotion)
+                        bentoNavNow.value -> app.discair.ui.common.BentoNav.exit(reducedMotion)
                         galleryNav -> galleryOut
                         tabToTab -> fadeOut(fadePlan.leave.toTween())
                         else -> slideOutHorizontally(axisPlan.leave.toTween()) { -slidePx } + fadeOut(axisPlan.leave.toTween())
@@ -359,6 +367,7 @@ fun MainShell(state: UiState, model: AppViewModel, container: AppContainer) {
                     when {
                         reducedMotion -> EnterTransition.None
                         indexNavNow.value -> app.discair.ui.common.IndexNav.popEnter(indexOf(initialState), indexOf(targetState), reducedMotion)
+                        bentoNavNow.value -> app.discair.ui.common.BentoNav.enter(reducedMotion)
                         galleryNav -> galleryIn
                         tabToTab -> fadeIn(fadePlan.arrive.toTween(fadePlan.arriveDelayMs))
                         else -> slideInHorizontally(axisPlan.arrive.toTween()) { -slidePx } + fadeIn(axisPlan.arrive.toTween())
@@ -368,6 +377,7 @@ fun MainShell(state: UiState, model: AppViewModel, container: AppContainer) {
                     when {
                         reducedMotion -> ExitTransition.None
                         indexNavNow.value -> app.discair.ui.common.IndexNav.popExit(indexOf(initialState), indexOf(targetState), reducedMotion)
+                        bentoNavNow.value -> app.discair.ui.common.BentoNav.exit(reducedMotion)
                         galleryNav -> galleryOut
                         else -> slideOutHorizontally(axisPlan.leave.toTween()) { slidePx } + fadeOut(axisPlan.leave.toTween())
                     }
@@ -430,7 +440,11 @@ fun MainShell(state: UiState, model: AppViewModel, container: AppContainer) {
         // It is drawn over a dark artwork tint, so it keeps light icons on every theme. The mini player (Cassette Deck only) sits
         // above its bar while a song is queued. The hidden cover load below gives the island its tint.
         // Gallery's dock slides away while Now Playing is up and back as it falls (docs/archive/completed/GALLERY_THEME.md section 8).
-        val dockMotion = if (app.discair.ui.common.isGallery()) Modifier.galleryDockMotion() else Modifier
+        val dockMotion = when {
+            app.discair.ui.common.isGallery() -> Modifier.galleryDockMotion()
+            app.discair.ui.common.isBento() -> Modifier.bentoDockMotion()
+            else -> Modifier
+        }
         Column(Modifier.align(Alignment.BottomCenter).onSizeChanged { islandPx = it.height }.then(dockMotion)) {
             if (app.discair.ui.common.TapeDeckRules.miniPlayerShown(app.discair.ui.theme.LocalPalette.current.layout, playerState.current != null)) {
                 app.discair.ui.player.TapeMiniPlayer(playerState, player, onOpen = { if (playerState.visible) nowPlayingOpen = true })
@@ -446,6 +460,9 @@ fun MainShell(state: UiState, model: AppViewModel, container: AppContainer) {
             }
             if (app.discair.ui.theme.LocalPalette.current.layout == app.discair.ui.theme.Layout.Index && playerState.current != null) {
                 app.discair.ui.common.IndexMiniPlayer(playerState, player, onOpen = { if (playerState.visible) nowPlayingOpen = true })
+            }
+            if (app.discair.ui.theme.LocalPalette.current.layout == app.discair.ui.theme.Layout.Bento && playerState.current != null) {
+                app.discair.ui.common.BentoMiniPlayer(playerState, player, onOpen = { if (playerState.visible) nowPlayingOpen = true })
             }
             if (!rail) app.discair.ui.theme.OnArtwork {
                 NavIsland(
@@ -490,6 +507,18 @@ private fun AppHeader(active: Int, showDiscover: Boolean, onDiscover: () -> Unit
     }
     if (app.discair.ui.theme.LocalPalette.current.layout == app.discair.ui.theme.Layout.Index) {
         app.discair.ui.common.IndexHomeBar(active, onDownloads, onSettings, showDiscover = showDiscover, onDiscover = onDiscover)
+        return
+    }
+    if (app.discair.ui.theme.LocalPalette.current.layout == app.discair.ui.theme.Layout.Bento) {
+        app.discair.ui.common.BentoHomeHeader(
+            title = flowTitle ?: "Your library",
+            active = active,
+            onDownloads = onDownloads,
+            onSettings = onSettings,
+            greeting = if (flowTitle == null) app.discair.ui.common.BentoShellRules.greeting() else null,
+            showDiscover = showDiscover,
+            onDiscover = onDiscover,
+        )
         return
     }
     Column(Modifier.background(app.discair.ui.theme.Ink.Rail)) {

@@ -226,6 +226,19 @@ private fun AlbumContent(route: AlbumRoute, page: AlbumPage, open: Opener, list:
         return
     }
 
+    // Bento: rounded tiles on the warm stone ground, in BentoAlbum.kt.
+    if (app.discair.ui.common.isBento()) {
+        BentoAlbumContent(
+            CoverStackAlbumData(
+                route, info, title, artist, year, s.genre.genre, owned, albumId, tracks, app.discair.model.coverUrlFor(info?.artworkUrl, choice), backs,
+                editions.size, canPick, { showEditions = true }, booklet, s.description.description, page.done != Done(),
+                s.similarAlbums.items, similarArtists, pathsOn, { showPaths = true },
+            ),
+            open, list,
+        )
+        return
+    }
+
     LazyColumn(Modifier.fillMaxSize(), state = list, contentPadding = PaddingValues(bottom = 32.dp + app.discair.ui.LocalBottomClearance.current)) {
         item {
             Box(Modifier.statusBarsPadding().fillMaxWidth().padding(16.dp)) {

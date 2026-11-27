@@ -268,6 +268,8 @@ fun DiscoverScreen(open: Opener, onOpenInboxEdition: (Long) -> Unit) {
             else if (app.discair.ui.common.isIndex()) IndexDiscoverHead(
                 list, app.discair.ui.common.IndexListsRules.headCount(list, (loaded.state as? Load.Ready)?.value?.let { s -> FlowDiscoverRules.sections(list, s, hidden).map { it.count } }), choose,
             )
+            // Bento: lens chips under the shell's Bento header (BentoDiscover.kt).
+            else if (app.discair.ui.common.isBento()) BentoDiscoverHead(list, choose)
             else {
             PageHeading("Discover", Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp), large = true)
             // List names as chips in one scrolling row (docs/plans/redesign.md 8.2).
@@ -399,6 +401,11 @@ private fun ListBody(
     // Index: numbered entries under a section head per lens or genre row (IndexDiscover.kt); sideways swipes are the screen's (switchBy).
     if (app.discair.ui.common.isIndex()) {
         IndexDiscoverList(list, FlowDiscoverRules.sections(list, sections, hidden), open, saves, list == DiscoveryList.Saved, onSave, onDismiss, emptyNote)
+        return
+    }
+    // Bento: rounded pick and list tiles (BentoDiscover.kt).
+    if (app.discair.ui.common.isBento()) {
+        BentoDiscoverList(list, FlowDiscoverRules.sections(list, sections, hidden), open, saves, list == DiscoveryList.Saved, onSave, onDismiss, emptyNote)
         return
     }
     // Gallery: Flow's grid in Gallery's type, tiles under hairline headings, no pager; sideways swipes are the screen's (switchBy).

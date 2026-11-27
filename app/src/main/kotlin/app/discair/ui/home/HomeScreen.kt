@@ -163,6 +163,25 @@ fun HomeScreen(open: Opener, onRadio: () -> Unit = {}, onDownloads: () -> Unit =
         return
     }
 
+    // Bento: rounded tiles in a 2-column grid with rotating tones (BentoHome.kt).
+    if (layout == app.discair.ui.theme.Layout.Bento) {
+        val rawDays = (taste.state as? Load.Ready)?.value?.listensByDay.orEmpty().map { it.count }
+        BentoHome(
+            GalleryHomeData(picks.state, pickList, picks.reload, genres.state, data.hero, data.arrivals, data.insight, banner),
+            listensTotal = rawDays.takeLast(30).sum().takeIf { rawDays.isNotEmpty() } ?: data.listens?.last7,
+            listensByDay = rawDays,
+            open = open,
+            feedback = feedback,
+            onRadio = onRadio,
+            onDiscover = onDiscover,
+            onLibrary = onLibrary,
+            onStats = onStats,
+            onServer = onServer,
+            onDownloads = onDownloads,
+        )
+        return
+    }
+
     @Composable
     fun Module(m: DashModule, wide: Boolean) {
         when (m) {
