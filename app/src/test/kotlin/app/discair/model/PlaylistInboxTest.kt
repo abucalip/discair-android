@@ -10,7 +10,7 @@ import org.junit.Test
 
 class PlaylistInboxTest {
     private val fixture = ApiJson.parseToJsonElement(
-        File("../../tests/fixtures/listenbrainz_inbox_responses.json").readText(),
+        listOf("../contract-fixtures/listenbrainz_inbox_responses.json", "contract-fixtures/listenbrainz_inbox_responses.json").map(::File).first { it.exists() }.readText(),
     ).jsonObject
 
     @Test fun shelfDecodesAvailableAndEmptyStates() {

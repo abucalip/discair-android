@@ -22,7 +22,7 @@ class GalleryTest {
 
     /** tokens.json, read without a JSON library: each palette object is one `{ ... }` holding `"key": "value"` pairs. */
     private fun tokens(): Map<String, Map<String, String>> {
-        val file = listOf("../../docs/design/gallery/tokens.json", "docs/design/gallery/tokens.json").map(::File).first { it.exists() }
+        val file = listOf("../design-tokens/gallery/tokens.json", "design-tokens/gallery/tokens.json").map(::File).first { it.exists() }
         val text = file.readText()
         val block = text.substring(text.indexOf("\"palettes\""), text.indexOf("\"type\""))
         val pair = Regex("\"(\\w+)\":\\s*(\"[^\"]*\"|true|false|null|\\[[^\\]]*\\])")

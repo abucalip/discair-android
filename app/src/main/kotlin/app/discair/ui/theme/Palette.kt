@@ -112,7 +112,7 @@ class BrutalShape(val radius: Float, val outline: Float, val shadow: Float) {
 private fun c(hex: Long) = Color(0xFF000000 or hex)
 
 /** [color] at 10% over [onto]: the tinted container behind a status (the `…Dim` roles). */
-private fun tint(color: Color, onto: Color): Color = lerp(onto, color, 0.10f)
+internal fun tint(color: Color, onto: Color): Color = lerp(onto, color, 0.10f)
 
 object Palettes {
     /** The original theme, unchanged from the first release. Always the dark fallback. */

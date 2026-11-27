@@ -8,7 +8,7 @@ import org.junit.Test
 class GalleryMotionTest {
     /** tokens.json → motion, read without a JSON library: each entry is `"name": { ... }` holding numbers and a curve array. */
     private fun motion(): Map<String, String> {
-        val file = listOf("../../docs/design/gallery/tokens.json", "docs/design/gallery/tokens.json").map(::File).first { it.exists() }
+        val file = listOf("../design-tokens/gallery/tokens.json", "design-tokens/gallery/tokens.json").map(::File).first { it.exists() }
         val text = file.readText()
         val block = text.substring(text.indexOf("\"motion\""))
         return Regex("\"(\\w+)\":\\s*(\\{[^{}]*\\}|\\d+)").findAll(block).associate { it.groupValues[1] to it.groupValues[2] }
