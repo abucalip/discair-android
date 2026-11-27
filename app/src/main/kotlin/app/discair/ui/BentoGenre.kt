@@ -79,9 +79,9 @@ internal fun BentoGenre(route: GenreRoute, loaded: Loaded<GenrePage>, open: Open
                 item(key = "head") {
                     BentoTile(
                         Modifier.padding(horizontal = Side).fillMaxWidth().bentoTileEnter(0, pageKey),
-                        tone = BentoTone.Sky,
+                        tone = BentoTone.Sun,
                     ) {
-                        BentoTileLabel("Genre", tone = BentoTone.Sky)
+                        BentoTileLabel("Genre · ${plural(albums.size, "album")}", tone = BentoTone.Sun)
                         Spacer(Modifier.height(4.dp))
                         Text(
                             route.name,
@@ -93,7 +93,7 @@ internal fun BentoGenre(route: GenreRoute, loaded: Loaded<GenrePage>, open: Open
                         )
                         Spacer(Modifier.height(4.dp))
                         Text(
-                            "${plural(artists.size, "artist")} · ${plural(albums.size, "album")}",
+                            plural(artists.size, "artist"),
                             style = BentoType.small(),
                             color = t.onToneMuted,
                         )
@@ -110,26 +110,49 @@ internal fun BentoGenre(route: GenreRoute, loaded: Loaded<GenrePage>, open: Open
 
                 if (artists.isNotEmpty()) {
                     item(key = "artists") {
-                        val shown = if (allArtists) artists else artists.take(5)
                         BentoTile(
                             Modifier.padding(horizontal = Side).fillMaxWidth().bentoTileEnter(1, pageKey),
                             tone = BentoTone.Surface,
                         ) {
                             BentoTileHeader(
                                 "Artists",
-                                actionLabel = if (!allArtists && artists.size > 5) "See all (${artists.size})" else null,
+                                actionLabel = if (!allArtists && artists.size > 4) "All ${artists.size}" else null,
                                 onAction = { allArtists = true },
                             )
-                            Spacer(Modifier.height(6.dp))
-                            shown.forEachIndexed { i, a ->
-                                BentoRow(
-                                    title = a.name,
-                                    subtitle = if (a.owned) "In your library" else "Not in your library",
-                                    showDivider = i < shown.lastIndex,
-                                    onClick = { open.artist(a.name, a.key, a.id, null) },
-                                    lead = { ArtistPhoto(a.name, null, Modifier.size(44.dp), circle = true) },
-                                    trail = { Icon(BentoIcons.Chevron, null, tint = p.textMuted, modifier = Modifier.size(18.dp)) },
-                                )
+                            Spacer(Modifier.height(10.dp))
+                            if (!allArtists) {
+                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    artists.take(4).forEach { a ->
+                                        Column(
+                                            Modifier.weight(1f)
+                                                .clickable(role = Role.Button) { open.artist(a.name, a.key, a.id, null) },
+                                            horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+                                            verticalArrangement = Arrangement.spacedBy(6.dp),
+                                        ) {
+                                            ArtistPhoto(a.name, null, Modifier.size(64.dp), circle = true)
+                                            Text(
+                                                a.name,
+                                                style = BentoType.tileLabel(),
+                                                color = p.text,
+                                                maxLines = 2,
+                                                overflow = TextOverflow.Ellipsis,
+                                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                            )
+                                        }
+                                    }
+                                    repeat((4 - artists.size).coerceAtLeast(0)) { Spacer(Modifier.weight(1f)) }
+                                }
+                            } else {
+                                artists.forEachIndexed { i, a ->
+                                    BentoRow(
+                                        title = a.name,
+                                        subtitle = if (a.owned) "In your library" else "Not in your library",
+                                        showDivider = i < artists.lastIndex,
+                                        onClick = { open.artist(a.name, a.key, a.id, null) },
+                                        lead = { ArtistPhoto(a.name, null, Modifier.size(44.dp), circle = true) },
+                                        trail = { Icon(BentoIcons.Chevron, null, tint = p.textMuted, modifier = Modifier.size(18.dp)) },
+                                    )
+                                }
                             }
                         }
                     }

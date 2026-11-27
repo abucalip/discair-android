@@ -145,56 +145,69 @@ internal fun BentoRadioPage(
                                 }
                             }
                         } else {
-                            itemsIndexed(stations.value, key = { _, s -> s.id }) { idx, st ->
-                                val isOnAir = st.id == onAirId
-                                val isFav = favourite(st)
-                                val tone = if (isOnAir) BentoTone.Sun else BentoTone.rotate(idx)
-                                val t = bentoTones()
-                                val nowLine = stripText(st, now(st)).ifBlank { null }
-                                BentoTile(
-                                    Modifier.fillMaxWidth().bentoTileEnter(idx, "bento-radio-stations"),
-                                    tone = tone,
-                                    onClick = { onPlay(st) },
-                                    clickLabel = "Play ${st.name}",
-                                ) {
-                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                                        val logo = st.logoUrl?.let { radioLogoRequest(repo.absolute(it), 128) }
-                                        Box(
-                                            Modifier.size(54.dp).clip(RoundedCornerShape(16.dp)).background(t.chip),
-                                            contentAlignment = Alignment.Center,
+                            val pairs = stations.value.chunked(2)
+                            items(pairs.size, key = { "st-pair:${pairs[it].first().id}" }) { pIdx ->
+                                val pair = pairs[pIdx]
+                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Gap)) {
+                                    pair.forEachIndexed { col, st ->
+                                        val idx = pIdx * 2 + col
+                                        val isOnAir = st.id == onAirId
+                                        val isFav = favourite(st)
+                                        val tone = if (isOnAir) BentoTone.Sun else BentoTone.rotate(idx)
+                                        val t = bentoTones()
+                                        val nowLine = stripText(st, now(st)).ifBlank { null }
+                                        BentoTile(
+                                            Modifier.weight(1f).bentoTileEnter(idx, "bento-radio-stations"),
+                                            tone = tone,
+                                            small = true,
+                                            onClick = { onPlay(st) },
+                                            clickLabel = "Play ${st.name}",
                                         ) {
-                                            if (logo != null) {
-                                                Cover(logo, Modifier.fillMaxSize(), rect = true)
-                                            } else {
-                                                Text(
-                                                    st.name.take(3).uppercase(),
-                                                    style = BentoType.tileName(),
-                                                    color = p.control,
-                                                )
+                                            Row(
+                                                Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically,
+                                            ) {
+                                                val logo = st.logoUrl?.let { radioLogoRequest(repo.absolute(it), 128) }
+                                                Box(
+                                                    Modifier.size(42.dp).clip(RoundedCornerShape(12.dp)).background(t.chip),
+                                                    contentAlignment = Alignment.Center,
+                                                ) {
+                                                    if (logo != null) {
+                                                        Cover(logo, Modifier.fillMaxSize(), rect = true)
+                                                    } else {
+                                                        Text(
+                                                            st.name.take(2).uppercase(),
+                                                            style = BentoType.tileName(),
+                                                            color = t.onTone,
+                                                        )
+                                                    }
+                                                }
+                                                if (isOnAir) {
+                                                    BentoPlayingBars(playing)
+                                                } else {
+                                                    BentoIconButton(
+                                                        icon = BentoIcons.Heart,
+                                                        description = if (isFav) "Remove ${st.name} from favourites" else "Add ${st.name} to favourites",
+                                                        onClick = { onFavourite(st) },
+                                                        solid = isFav,
+                                                        small = true,
+                                                        tone = tone,
+                                                    )
+                                                }
                                             }
-                                        }
-                                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                                Text(st.name, style = BentoType.tileName(), color = t.onTone, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
-                                                if (isOnAir) BentoPlayingBars(playing)
-                                            }
+                                            Spacer(Modifier.height(14.dp))
+                                            Text(st.name, style = BentoType.tileName(), color = t.onTone, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                             Text(
                                                 nowLine ?: if (isOnAir) "On air now" else "Tap to listen",
-                                                style = BentoType.small(),
+                                                style = BentoType.tileLabel(),
                                                 color = t.onToneMuted,
-                                                maxLines = 2,
+                                                maxLines = 1,
                                                 overflow = TextOverflow.Ellipsis,
                                             )
                                         }
-                                        BentoIconButton(
-                                            icon = BentoIcons.Heart,
-                                            description = if (isFav) "Remove ${st.name} from favourites" else "Add ${st.name} to favourites",
-                                            onClick = { onFavourite(st) },
-                                            solid = isFav,
-                                            small = true,
-                                            tone = tone,
-                                        )
                                     }
+                                    if (pair.size == 1) Spacer(Modifier.weight(1f))
                                 }
                             }
                         }
@@ -360,13 +373,13 @@ internal fun BentoRadioNow(
             }
         }
 
-        // Info + controls tile
-        BentoTile(Modifier.fillMaxWidth().padding(bottom = 14.dp), tone = BentoTone.Surface) {
+        // Info + controls directly on ink
+        Column(Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 10.dp)) {
             BentoEyebrow(IndexRadioRules.airLine(item.title, state.isPlaying))
             Spacer(Modifier.height(4.dp))
             Text(
                 headline,
-                style = BentoType.tileTitle(),
+                style = BentoType.heroTitle(),
                 color = p.text,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
@@ -376,7 +389,7 @@ internal fun BentoRadioNow(
                 Spacer(Modifier.height(2.dp))
                 Text(by, style = BentoType.body(), color = p.textMuted, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(16.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
                 val fav = live.favourite
                 BentoIconButton(

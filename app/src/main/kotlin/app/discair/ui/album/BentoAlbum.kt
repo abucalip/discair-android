@@ -185,11 +185,12 @@ internal fun BentoAlbumContent(d: CoverStackAlbumData, open: Opener, list: LazyL
             )
         }
 
-        // Hero cover + title + primary action tile
+        // Hero cover + title tile (warm when owned, bloom when not in library)
         item(key = "hero") {
+            val heroTone = if (d.owned) BentoTone.Warm else BentoTone.Bloom
             BentoTile(
                 Modifier.padding(horizontal = Side).fillMaxWidth().bentoTileEnter(0, pageKey),
-                tone = BentoTone.Surface,
+                tone = heroTone,
             ) {
                 Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                     val coverSize = if (d.owned) 224.dp else 188.dp
@@ -209,60 +210,66 @@ internal fun BentoAlbumContent(d: CoverStackAlbumData, open: Opener, list: LazyL
                     }
                 }
                 Spacer(Modifier.height(14.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    if (!d.owned) {
-                        BentoTag("Not in your library", tone = BentoTone.Warm)
-                    } else {
-                        d.info?.quality?.takeIf { it.isNotBlank() }?.let { q ->
-                            BentoTag(q, tone = BentoTone.Leaf)
+                Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        if (!d.owned) {
+                            BentoTag("Not in your library", tone = BentoTone.Surface)
+                        } else {
+                            d.info?.quality?.takeIf { it.isNotBlank() }?.let { q ->
+                                BentoTag(q, tone = BentoTone.Leaf)
+                            }
+                            if (playingIdx != null) {
+                                BentoTag("Playing track ${playingIdx + 1}", tone = BentoTone.Sun)
+                            }
                         }
-                        if (playingIdx != null) {
-                            BentoTag("Playing track ${playingIdx + 1}", tone = BentoTone.Sun)
-                        }
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        d.title,
+                        style = BentoType.heroTitle(),
+                        color = heroTone.content(p, t),
+                        maxLines = 4,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.semantics { heading() },
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        d.artist,
+                        style = BentoType.rowTitle(),
+                        color = heroTone.muted(p, t),
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.heightIn(min = 36.dp).clickable(role = Role.Button, onClick = openArtist).padding(vertical = 4.dp),
+                    )
+                }
+            }
+        }
+
+        // Primary action pills below hero tile
+        item(key = "actions") {
+            FlowRow(
+                Modifier.fillMaxWidth().padding(horizontal = Side),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                itemVerticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (albumId != null) {
+                    BentoButton("Play", { play.playAlbum(albumId) }, icon = BentoIcons.Play)
+                    BentoButton("Shuffle", { play.playAlbum(albumId, shuffle = true) }, kind = BentoButtonKind.Outline, icon = BentoIcons.Shuffle)
+                    if (d.pathsOn) {
+                        BentoButton("Paths", d.onPaths, kind = BentoButtonKind.Outline, icon = BentoIcons.Paths)
                     }
                 }
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    d.title,
-                    style = BentoType.heroTitle(),
-                    color = p.text,
-                    maxLines = 4,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.semantics { heading() },
-                )
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    d.artist,
-                    style = BentoType.rowTitle(),
-                    color = p.control,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.heightIn(min = 36.dp).clickable(role = Role.Button, onClick = openArtist).padding(vertical = 4.dp),
-                )
-                Spacer(Modifier.height(10.dp))
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    itemVerticalAlignment = Alignment.CenterVertically,
-                ) {
-                    if (albumId != null) {
-                        BentoButton("Play", { play.playAlbum(albumId) }, icon = BentoIcons.Play)
-                        BentoButton("Shuffle", { play.playAlbum(albumId, shuffle = true) }, kind = BentoButtonKind.Outline, icon = BentoIcons.Shuffle)
-                        if (d.pathsOn) {
-                            BentoButton("Paths", d.onPaths, kind = BentoButtonKind.Outline, icon = BentoIcons.Paths)
-                        }
-                    }
-                    if (!d.owned || d.tracks.any { !it.owned }) {
-                        BentoGetButton(
-                            state = hub.getState(d.artist, d.title),
-                            onGet = { hub.getAlbum(d.artist, d.title, metadata) },
-                            small = d.owned,
-                            idleLabel = "Get album",
-                        )
-                    }
-                    if (!d.owned) {
-                        BentoSaveButton(d.artist, d.title, metadata)
-                    }
+                if (!d.owned || d.tracks.any { !it.owned }) {
+                    BentoGetButton(
+                        state = hub.getState(d.artist, d.title),
+                        onGet = { hub.getAlbum(d.artist, d.title, metadata) },
+                        small = d.owned,
+                        idleLabel = "Get album",
+                    )
+                }
+                if (!d.owned) {
+                    BentoSaveButton(d.artist, d.title, metadata)
                 }
             }
         }

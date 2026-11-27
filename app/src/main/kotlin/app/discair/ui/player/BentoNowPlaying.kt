@@ -475,49 +475,71 @@ private fun BentoQueueView(state: PlayerUiState, controller: PlayerController, m
                 }
             }
         } else {
-            item(key = "queue-card") {
-                BentoTile(Modifier.fillMaxWidth(), tone = BentoTone.Surface) {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                        val upcoming = GalleryPlayerRules.upcoming(currentIdx, items.size)
-                        Text("${items.size} in queue", style = BentoType.tileTitle(), color = p.text)
-                        if (upcoming.isNotEmpty()) {
-                            BentoButton(
-                                "Clear",
-                                { upcoming.asReversed().forEach { controller.remove(it) } },
-                                kind = BentoButtonKind.Outline,
-                                small = true,
-                            )
+            val currentItem = items.getOrNull(currentIdx)
+            val upcoming = GalleryPlayerRules.upcoming(currentIdx, items.size)
+            if (currentItem != null) {
+                item(key = "queue-now") {
+                    val t = bentoTones()
+                    BentoTile(Modifier.fillMaxWidth(), tone = BentoTone.Warm, small = true) {
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            BentoCover(currentItem.coverUrl.ifBlank { null }, Modifier.size(48.dp), sizeKind = BentoCoverSize.Row)
+                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                Text("Now playing", style = BentoType.tileLabel(), color = t.onToneMuted)
+                                Text(currentItem.title, style = BentoType.rowTitle(), color = t.onTone, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                Text(
+                                    listOfNotNull(currentItem.artist.ifBlank { null }, currentItem.album.ifBlank { null }).joinToString(" · "),
+                                    style = BentoType.small(),
+                                    color = t.onToneMuted,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                            BentoPlayingBars(state.isPlaying)
                         }
                     }
-                    Spacer(Modifier.height(8.dp))
-                    items.forEachIndexed { idx, q ->
-                        val active = idx == currentIdx
-                        BentoRow(
-                            title = q.title,
-                            subtitle = listOfNotNull(q.artist.ifBlank { null }, q.album.ifBlank { null }).joinToString(" · "),
-                            active = active,
-                            showDivider = idx < items.lastIndex,
-                            onClick = { controller.skipTo(idx) },
-                            lead = {
-                                Box(Modifier.size(44.dp), contentAlignment = Alignment.Center) {
-                                    if (active) {
-                                        BentoPlayingBars(state.isPlaying)
-                                    } else {
-                                        BentoCover(q.coverUrl.ifBlank { null }, Modifier.size(44.dp), sizeKind = BentoCoverSize.Row)
-                                    }
-                                }
-                            },
-                            trail = {
-                                if (!active) {
+                }
+            }
+            if (upcoming.isNotEmpty()) {
+                item(key = "queue-upcoming-head") {
+                    Row(
+                        Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text("Up next · ${upcoming.size}", style = BentoType.tileTitle(), color = p.text)
+                        BentoButton(
+                            "Clear",
+                            { upcoming.asReversed().forEach { controller.remove(it) } },
+                            kind = BentoButtonKind.Outline,
+                            small = true,
+                        )
+                    }
+                }
+                item(key = "queue-card") {
+                    BentoTile(Modifier.fillMaxWidth(), tone = BentoTone.Surface) {
+                        upcoming.forEachIndexed { pos, idx ->
+                            val q = items[idx]
+                            BentoRow(
+                                title = q.title,
+                                subtitle = listOfNotNull(q.artist.ifBlank { null }, q.album.ifBlank { null }).joinToString(" · "),
+                                active = false,
+                                showDivider = pos < upcoming.lastIndex,
+                                onClick = { controller.skipTo(idx) },
+                                lead = { BentoCover(q.coverUrl.ifBlank { null }, Modifier.size(44.dp), sizeKind = BentoCoverSize.Row) },
+                                trail = {
                                     BentoIconButton(
                                         BentoIcons.Close,
                                         "Remove ${q.title} from queue",
                                         { controller.remove(idx) },
                                         small = true,
                                     )
-                                }
-                            },
-                        )
+                                },
+                            )
+                        }
                     }
                 }
             }

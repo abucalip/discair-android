@@ -287,11 +287,13 @@ internal fun BentoCrossfade(
             }
         }
 
-        // Big stat numeral + length slider tile
-        BentoTile(Modifier.padding(horizontal = Side).fillMaxWidth().alpha(if (on) 1f else 0.55f), tone = BentoTone.Surface) {
-            BentoTileLabel("Fade length")
-            Spacer(Modifier.height(4.dp))
-            Text("${seconds}s", style = BentoType.stat(), color = p.text)
+        // Big stat numeral + length slider tile (bloom per settings.png frame 4)
+        BentoTile(Modifier.padding(horizontal = Side).fillMaxWidth().alpha(if (on) 1f else 0.55f), tone = BentoTone.Bloom) {
+            Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                BentoTileLabel("Fade between songs", tone = BentoTone.Bloom)
+                Spacer(Modifier.height(4.dp))
+                Text("${seconds} s", style = BentoType.stat(), color = t.onTone)
+            }
             Spacer(Modifier.height(8.dp))
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 BentoIconButton(
@@ -300,6 +302,7 @@ internal fun BentoCrossfade(
                     { settings.crossfadeSeconds = CrossfadeText.nudge(seconds, -1) },
                     small = true,
                     enabled = on && CrossfadeText.canLower(seconds),
+                    tone = BentoTone.Bloom,
                 )
                 Slider(
                     value = seconds.toFloat(),
@@ -318,6 +321,7 @@ internal fun BentoCrossfade(
                     { settings.crossfadeSeconds = CrossfadeText.nudge(seconds, 1) },
                     small = true,
                     enabled = on && CrossfadeText.canRaise(seconds),
+                    tone = BentoTone.Bloom,
                 )
             }
         }
