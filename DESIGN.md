@@ -386,3 +386,10 @@ The playing album's release group comes from the album page the app already read
 ## Colour palettes for Soft Brut and Flow (2026-11-13, `docs/archive/completed/palettes.md`)
 
 Each theme has more than one palette, all in `ui/theme/Palette.kt` with the same layout, shape and font as the theme: Soft Brut Lavender, Mint, Peach, Sky, Lemon (day) and Midnight Mint, Plum Peach, Navy Sky (night); Flow Warm white, Forest, Raspberry, Violet (day) and Ember, Moss, Plum (night). Day palettes are in `Palettes.Light`, night ones in `Palettes.Dark`, and the owner picks them as the Day and Night theme in Appearance. Content on a Soft Brut accent fill uses `onAccent`. Flow's chevron and switch-off greys and the bar hairline follow the palette (`FlowRules`). Not seen on a device.
+
+## LB-20 radio mixes
+
+- Mobile-design review: Android / Kotlin Compose; existing stack navigation, theme components, 48dp labelled controls, 8dp spacing, wrapping text and lazy track rows. No new motion or gesture-only controls.
+- Port of LB-19's artist/tag seeds, familiarity/mode controls and ordered preview; native playback replaces the web save action. Controls use a stack page for phone space, with system and visible Back returning consistently.
+- Request, empty, unconfigured, error and ownership-unavailable states use text. Failed/empty/cancelled generation preserves playback; detail rechecks ownership before playing. Shared Inbox rows retain download progress and safe refusal messages.
+- Code review covered all artist layouts and the shared Discover entry. Kotlin is unsupported by the skill's automated audit (zero files checked); real-device visual, 200% font-scale, TalkBack and performance checks remain pending because no USB device was available.

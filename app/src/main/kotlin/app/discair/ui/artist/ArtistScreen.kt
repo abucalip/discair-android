@@ -134,7 +134,7 @@ private fun ArtistContent(route: ArtistRoute, page: ArtistPage, open: Opener, li
         CoverStackArtistContent(
             CoverStackArtistData(
                 route, name, sections, owned, info?.albumCount, info?.owned == true, artistId, similar, collage,
-                pathsOn && pathsMbid != null, { showPaths = true },
+                pathsOn && pathsMbid != null, { showPaths = true }, pathsMbid,
             ),
             open, list, showAllSongs, { showAllSongs = true }, showAllMissing, { showAllMissing = true },
         )
@@ -146,7 +146,7 @@ private fun ArtistContent(route: ArtistRoute, page: ArtistPage, open: Opener, li
         FlowArtistContent(
             CoverStackArtistData(
                 route, name, sections, owned, info?.albumCount, info?.owned == true, artistId, similar, collage,
-                pathsOn && pathsMbid != null, { showPaths = true },
+                pathsOn && pathsMbid != null, { showPaths = true }, pathsMbid,
             ),
             open, list, showAllSongs, { showAllSongs = true }, showAllMissing, { showAllMissing = true },
         )
@@ -158,7 +158,7 @@ private fun ArtistContent(route: ArtistRoute, page: ArtistPage, open: Opener, li
         GalleryArtistContent(
             CoverStackArtistData(
                 route, name, sections, owned, info?.albumCount, info?.owned == true, artistId, similar, collage,
-                pathsOn && pathsMbid != null, { showPaths = true },
+                pathsOn && pathsMbid != null, { showPaths = true }, pathsMbid,
             ),
             open, list, showAllSongs, { showAllSongs = true }, showAllMissing, { showAllMissing = true },
         )
@@ -170,7 +170,7 @@ private fun ArtistContent(route: ArtistRoute, page: ArtistPage, open: Opener, li
         IndexArtistContent(
             CoverStackArtistData(
                 route, name, sections, owned, info?.albumCount, info?.owned == true, artistId, similar, collage,
-                pathsOn && pathsMbid != null, { showPaths = true },
+                pathsOn && pathsMbid != null, { showPaths = true }, pathsMbid,
             ),
             open, list, showAllSongs, { showAllSongs = true },
         )
@@ -182,7 +182,7 @@ private fun ArtistContent(route: ArtistRoute, page: ArtistPage, open: Opener, li
         BentoArtistContent(
             CoverStackArtistData(
                 route, name, sections, owned, info?.albumCount, info?.owned == true, artistId, similar, collage,
-                pathsOn && pathsMbid != null, { showPaths = true },
+                pathsOn && pathsMbid != null, { showPaths = true }, pathsMbid,
             ),
             open, list, showAllSongs, { showAllSongs = true }, showAllMissing, { showAllMissing = true },
         )
@@ -232,6 +232,7 @@ private fun ArtistContent(route: ArtistRoute, page: ArtistPage, open: Opener, li
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             )
         }
+        item { app.discair.ui.discover.ArtistRadioActions(pathsMbid) }
         val allSongs = sections.topSongs.items
         val songs = if (showAllSongs) allSongs else allSongs.take(SONGS_SHOWN)
         if (songs.isNotEmpty()) {

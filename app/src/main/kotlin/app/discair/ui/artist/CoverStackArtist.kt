@@ -79,6 +79,7 @@ internal class CoverStackArtistData(
     val collage: List<app.discair.model.CollageEntry>,
     val canPaths: Boolean,
     val onPaths: () -> Unit,
+    val radioMbid: String?,
 )
 
 /**
@@ -141,6 +142,7 @@ internal fun CoverStackArtistContent(d: CoverStackArtistData, open: Opener, list
                 }
             }
         }
+        item { app.discair.ui.discover.ArtistRadioActions(d.radioMbid) }
         val allSongs = d.sections.topSongs.items
         if (allSongs.isNotEmpty()) {
             item {
