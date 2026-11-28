@@ -287,6 +287,7 @@ fun DiscoverScreen(open: Opener, onOpenInboxEdition: (Long) -> Unit) {
                 }
             }
             }
+            RadioMixEntry()
             PlaylistInboxShelf(onOpenInboxEdition)
             statusLine?.let {
                 Text(

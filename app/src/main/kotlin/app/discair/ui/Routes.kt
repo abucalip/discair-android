@@ -6,6 +6,7 @@ import kotlinx.serialization.Serializable
 @Serializable data object LibraryRoute
 @Serializable data object DiscoverRoute
 @Serializable data class InboxEditionRoute(val id: Long)
+@Serializable data class RadioMixRoute(val kind: String = "discovery", val artistMbid: String? = null)
 @Serializable data object SearchRoute
 @Serializable data object SettingsRoute
 @Serializable data object DownloadsRoute

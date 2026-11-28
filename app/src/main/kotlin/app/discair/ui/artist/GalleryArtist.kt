@@ -116,6 +116,7 @@ internal fun GalleryArtistContent(d: CoverStackArtistData, open: Opener, list: L
                 if (d.canPaths) GalleryButton("Paths", d.onPaths, kind = GalleryButtonKind.Text, icon = GalleryIcons.Paths)
             }
         }
+        item { app.discair.ui.discover.ArtistRadioActions(d.radioMbid) }
         val allSongs = d.sections.topSongs.items
         if (allSongs.isNotEmpty()) {
             val more = allSongs.size > GalleryPagesRules.SONGS_SHOWN && !showAllSongs

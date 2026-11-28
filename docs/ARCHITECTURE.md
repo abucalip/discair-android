@@ -11,6 +11,11 @@ Paths are relative to the repository root.
 | HTTP clients (Librarian and Subsonic) and cookies | `app/src/main/kotlin/app/discair/net/` |
 | Domain models and DTOs | `app/src/main/kotlin/app/discair/model/` |
 
+## Artist Radio and Discovery Mix
+
+- `model/RadioMix.kt`, `data/RadioMixActions.kt`, `data/Repository.kt` (under `app/src/main/kotlin/app/discair/`): preview DTOs, cancellable generation and live server actions. Focused tests: `RadioMixTest`, `RadioMixRepositoryTest`, `RadioMixActionsTest`.
+- `ui/discover/RadioMixScreen.kt` and `PlaylistInboxScreen.kt`: artist/tag controls and shared ordered playback/download detail; all artist layouts use `ArtistRadioActions`. Navigation: `ui/Routes.kt`, `ui/MainShell.kt`.
+
 ## Playback and Lyrics
 
 | Area | Start here |

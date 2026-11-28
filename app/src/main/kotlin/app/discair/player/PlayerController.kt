@@ -87,6 +87,13 @@ class PlayerController(
         port.setItems(result.state.items, result.state.index, 0, playWhenReady = true)
     }
 
+    /** Ordered server mixes ignore a previously enabled shuffle setting. Empty results leave playback alone. */
+    fun playOrderedItems(items: List<QueueItem>) {
+        if (items.isEmpty()) return
+        playItems(items)
+        setShuffle(false)
+    }
+
     fun enqueue(items: List<QueueItem>) {
         val wasEmpty = _state.value.queue.isEmpty
         val result = _state.value.queue.enqueue(items)

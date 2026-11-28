@@ -258,6 +258,9 @@ fun MainShell(state: UiState, model: AppViewModel, container: AppContainer) {
     CompositionLocalProvider(
         LocalBottomClearance provides clearance, LocalRepository provides repo, LocalImageLoader provides container.imageLoader, LocalAcquisitions provides hub,
         app.discair.ui.player.LocalPlayActions provides playActions,
+        app.discair.ui.discover.LocalOpenRadioMix provides { kind, mbid ->
+            nav.navigate(RadioMixRoute(kind, mbid)) { launchSingleTop = true }
+        },
         app.discair.ui.radio.LocalRadio provides radio,
         app.discair.ui.player.LocalPlayingNow provides playerState.current?.let {
             app.discair.ui.player.PlayingNow(it.albumId, it.title, playerState.isPlaying, it.track, it.disc)
@@ -412,10 +415,17 @@ fun MainShell(state: UiState, model: AppViewModel, container: AppContainer) {
                         }
                     }
                 }
+                composable<RadioMixRoute> { entry ->
+                    Opaque {
+                        val route = entry.toRoute<RadioMixRoute>()
+                        app.discair.ui.discover.RadioMixScreen(route.kind, route.artistMbid,
+                            onBack = { nav.popBackStack() }, onPlay = { player.playOrderedItems(it) })
+                    }
+                }
                 composable<InboxEditionRoute> { entry ->
                     Opaque {
                         InboxEditionScreen(entry.toRoute<InboxEditionRoute>().id,
-                            onBack = { nav.popBackStack() }, onPlay = { player.playItems(it) })
+                            onBack = { nav.popBackStack() }, onPlay = { player.playOrderedItems(it) })
                     }
                 }
                 composable<LibraryRoute> { TopLevelPage("Library") { Opaque { LibraryScreen(open) } } }

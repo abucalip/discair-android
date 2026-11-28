@@ -175,6 +175,9 @@ interface LibraryRepository : AcquisitionApi {
     /** One discovery list in the server's order. [list] is a path name such as `new_releases` or a lens name. */
     fun discovery(list: String, count: Int): DiscoveryResult
 
+    fun previewRadioMix(request: app.discair.model.RadioMixRequest): app.discair.model.RadioMix = throw UnsupportedOperationException()
+    fun radioMix(id: String): app.discair.model.RadioMix = throw UnsupportedOperationException()
+    fun downloadRadioMixTrack(id: String, position: Int): app.discair.model.InboxDownload = throw UnsupportedOperationException()
     fun playlistInbox(): app.discair.model.PlaylistInbox = throw UnsupportedOperationException()
     fun downloadInboxTrack(id: Long, position: Int): app.discair.model.InboxDownload = throw UnsupportedOperationException()
     fun inboxEdition(id: Long): app.discair.model.InboxEdition = throw UnsupportedOperationException()
@@ -471,6 +474,20 @@ class LibrarianRepository(
 
     override fun discovery(list: String, count: Int) =
         parseDiscovery(fetch(listOf("api", "discovery", list), mapOf("count" to "$count")))
+
+    override fun previewRadioMix(request: app.discair.model.RadioMixRequest): app.discair.model.RadioMix {
+        if (ReadMode.isCacheOnly) throw CacheMiss()
+        return ApiJson.decodeFromString(client.post(listOf("api", "radio-mixes", "preview"),
+            ApiJson.encodeToString(app.discair.model.RadioMixRequest.serializer(), request)))
+    }
+
+    override fun radioMix(id: String): app.discair.model.RadioMix {
+        if (ReadMode.isCacheOnly) throw CacheMiss()
+        return ApiJson.decodeFromString(client.get(listOf("api", "radio-mixes", id)))
+    }
+
+    override fun downloadRadioMixTrack(id: String, position: Int): app.discair.model.InboxDownload =
+        ApiJson.decodeFromString(client.post(listOf("api", "radio-mixes", id, "tracks", position.toString(), "download")))
 
     override fun playlistInbox(): app.discair.model.PlaylistInbox {
         if (ReadMode.isCacheOnly) throw CacheMiss()

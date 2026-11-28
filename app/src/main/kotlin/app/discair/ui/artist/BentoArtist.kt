@@ -252,6 +252,7 @@ internal fun BentoArtistContent(
         }
 
         // Top songs tile
+        item { app.discair.ui.discover.ArtistRadioActions(d.radioMbid) }
         val allSongs = d.sections.topSongs.items
         if (allSongs.isNotEmpty()) {
             item(key = "top-songs") {

@@ -108,6 +108,29 @@ internal fun PlaylistInboxShelf(onOpen: (Long) -> Unit) {
 @Composable
 internal fun InboxEditionScreen(id: Long, onBack: () -> Unit, onPlay: (List<QueueItem>) -> Unit) {
     val repo = LocalRepository.current
+    MatchedTracksScreen(id, "Playlist Inbox", { repo.inboxEdition(id) },
+        { position -> repo.downloadInboxTrack(id, position) }, onBack, onPlay) { EditionMetadata(it) }
+}
+
+@Composable
+internal fun RadioMixDetailScreen(id: String, onBack: () -> Unit, onPlay: (List<QueueItem>) -> Unit) {
+    val repo = LocalRepository.current
+    MatchedTracksScreen(id, "Mix", { repo.radioMix(id).let { mix ->
+        check(mix.state == "ready") { mix.explanation }
+        mix.edition()
+    } }, { position -> repo.downloadRadioMixTrack(id, position) }, onBack, onPlay) {
+        Text(it.ownedCount?.let { count -> "$count of ${it.totalCount} owned" }
+            ?: "${it.totalCount} tracks · Ownership unavailable")
+    }
+}
+
+@Composable
+private fun MatchedTracksScreen(
+    id: Any, label: String, load: () -> InboxEdition, download: (Int) -> InboxDownload,
+    onBack: () -> Unit, onPlay: (List<QueueItem>) -> Unit,
+    metadata: @Composable (InboxEdition) -> Unit,
+) {
+    val repo = LocalRepository.current
     val hub = LocalAcquisitions.current
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val scope = rememberCoroutineScope()
@@ -121,7 +144,7 @@ internal fun InboxEditionScreen(id: Long, onBack: () -> Unit, onPlay: (List<Queu
             var ownershipChecks = 0
             while (true) {
                 try {
-                    val fresh = withContext(Dispatchers.IO) { repo.inboxEdition(id) }
+                    val fresh = withContext(Dispatchers.IO) { load() }
                     for (track in fresh.tracks) {
                         val action = actions[track.position] as? InboxAction.Result ?: continue
                         val attached = action.reply.acquisitionKey != null && track.acquisitionKey != null
@@ -153,6 +176,7 @@ internal fun InboxEditionScreen(id: Long, onBack: () -> Unit, onPlay: (List<Queu
         }
     }
 
+    var playing by remember(repo, id) { mutableStateOf(false) }
     val currentEdition = edition
     val tracking = currentEdition?.tracks.orEmpty().any { track ->
         inboxDownloadActive(track.downloadStatus(actions[track.position]))
@@ -165,10 +189,10 @@ internal fun InboxEditionScreen(id: Long, onBack: () -> Unit, onPlay: (List<Queu
     }
 
     Column(Modifier.fillMaxSize().statusBarsPadding()) {
-        BackBar(onBack, "Playlist Inbox")
+        BackBar(onBack, label)
         if (currentEdition == null) {
             val problem = refreshProblem
-            if (problem == null) InboxStatus("Loading playlist…")
+            if (problem == null) InboxStatus(if (label == "Mix") "Loading mix…" else "Loading playlist…")
             else InboxStatus(problem) { refresh++ }
         } else {
             val playback = remember(currentEdition) { currentEdition.playbackItems() }
@@ -180,23 +204,42 @@ internal fun InboxEditionScreen(id: Long, onBack: () -> Unit, onPlay: (List<Queu
                 item {
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         PageHeading(currentEdition.displayTitle, large = true)
-                        EditionMetadata(currentEdition)
-                        Button(onClick = { onPlay(playback) }, enabled = playback.isNotEmpty()) { Text("Play owned tracks") }
+                        metadata(currentEdition)
+                        Button(onClick = {
+                            if (!playing) {
+                                playing = true
+                                scope.launch {
+                                    try {
+                                        val fresh = withContext(Dispatchers.IO) { load() }
+                                        edition = fresh
+                                        val items = fresh.playbackItems()
+                                        if (items.isNotEmpty()) {
+                                            onPlay(items)
+                                            refreshProblem = null
+                                        } else refreshProblem = "No confirmed owned tracks are available to play."
+                                    } catch (e: CancellationException) {
+                                        throw e
+                                    } catch (e: Exception) {
+                                        refreshProblem = classifyException(e, networkAvailable = true).message
+                                    } finally { playing = false }
+                                }
+                            }
+                        }, enabled = playback.isNotEmpty() && !playing) { Text(if (playing) "Checking ownership…" else "Play owned tracks") }
                         OutlinedButton(onClick = { refresh++ }) { Text("Refresh status") }
                         refreshProblem?.let { InboxStatus(it) }
-                        if (currentEdition.tracks.isEmpty()) Text("This playlist has no tracks.")
+                        if (currentEdition.tracks.isEmpty()) Text(if (label == "Mix") "This mix has no tracks." else "This playlist has no tracks.")
                     }
                 }
                 items(currentEdition.tracks, key = { it.position }) { track ->
                     val action = actions[track.position]
                     val key = track.acquisitionKey ?: (action as? InboxAction.Result)?.reply?.acquisitionKey
                     val job = hub.jobs?.firstOrNull { key?.matches(it) == true }
-                    TrackRow(track, action, job) {
+                    TrackRow(track, action, job, downloadsEnabled = currentEdition.source != "artist_radio") {
                         if (actions[track.position] != action) return@TrackRow
                         actions[track.position] = InboxAction.Pending
                         scope.launch {
                             actions[track.position] = try {
-                                InboxAction.Result(withContext(Dispatchers.IO) { repo.downloadInboxTrack(id, track.position) })
+                                InboxAction.Result(withContext(Dispatchers.IO) { download(track.position) })
                             } catch (e: CancellationException) {
                                 throw e
                             } catch (e: Exception) {
@@ -247,7 +290,7 @@ private fun EditionMetadata(edition: InboxEdition) {
 }
 
 @Composable
-private fun TrackRow(track: InboxTrack, action: InboxAction?, job: AcquisitionJob?, onDownload: () -> Unit) {
+private fun TrackRow(track: InboxTrack, action: InboxAction?, job: AcquisitionJob?, downloadsEnabled: Boolean, onDownload: () -> Unit) {
     Column(Modifier.fillMaxWidth()) {
         Text("${track.position + 1}. ${track.displayTitle}", style = MaterialTheme.typography.titleSmall)
         val metadata = listOfNotNull(track.artist, track.album).filter(String::isNotBlank).joinToString(" · ")
@@ -278,8 +321,8 @@ private fun TrackRow(track: InboxTrack, action: InboxAction?, job: AcquisitionJo
             }
             val retry = failure?.retryable ?: (inboxDownloadRetryable(status) ||
                 (result?.ok == false && status != "identity_conflict" && !inboxDownloadActive(status)))
-            val canDownload = action == null && status == null && track.matchState == "missing"
-            if (action != InboxAction.Pending && (canDownload || retry)) {
+            val canDownload = action == null && status == null && track.matchState in setOf("missing", "ambiguous")
+            if (downloadsEnabled && action != InboxAction.Pending && (canDownload || retry)) {
                 OutlinedButton(onClick = onDownload) { Text(if (retry && status != "dismissed") "Try again" else "Download") }
             }
         }

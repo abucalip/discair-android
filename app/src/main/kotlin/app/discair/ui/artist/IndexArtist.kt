@@ -120,6 +120,7 @@ internal fun IndexArtistContent(d: CoverStackArtistData, open: Opener, list: Laz
                 if (d.canPaths) IndexButton("Paths", d.onPaths, kind = IndexButtonKind.Ghost, icon = IndexIcons.Paths)
             }
         }
+        item { app.discair.ui.discover.ArtistRadioActions(d.radioMbid) }
         val allSongs = d.sections.topSongs.items
         if (allSongs.isNotEmpty()) {
             val more = allSongs.size > IndexPagesRules.SONGS_SHOWN && !showAllSongs

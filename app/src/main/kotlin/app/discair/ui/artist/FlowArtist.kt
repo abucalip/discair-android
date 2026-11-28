@@ -148,6 +148,7 @@ internal fun FlowArtistContent(d: CoverStackArtistData, open: Opener, list: Lazy
                 }
             }
         }
+        item { app.discair.ui.discover.ArtistRadioActions(d.radioMbid) }
         val allSongs = d.sections.topSongs.items
         if (allSongs.isNotEmpty()) {
             item {

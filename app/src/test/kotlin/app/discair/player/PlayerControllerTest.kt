@@ -34,6 +34,27 @@ class PlayerControllerTest {
         assertEquals(3, QueueCodec.decode(r.storage.text).items.size)
     }
 
+    @Test fun orderedMixDisablesPreviousShuffleAndPreservesRepeatedOccurrences() = runTest {
+        val r = rig()
+        r.c.playItems(songs(3))
+        r.c.setShuffle(true)
+        r.c.playOrderedItems(listOf(song(2), song(1), song(2)))
+        assertFalse(r.c.state.value.queue.shuffle)
+        assertEquals(listOf("s2", "s1", "s2"), r.c.state.value.queue.items.map { it.songId })
+        assertEquals("s2", r.c.state.value.current?.songId)
+    }
+
+    @Test fun emptyOrderedMixPreservesPlaybackAndShuffle() = runTest {
+        val r = rig()
+        r.c.playItems(songs(3), 1)
+        r.c.setShuffle(true)
+        val before = r.c.state.value
+        val calls = r.port.log.toList()
+        r.c.playOrderedItems(emptyList())
+        assertEquals(before, r.c.state.value)
+        assertEquals(calls, r.port.log)
+    }
+
     @Test fun restoreIsPausedAndStartsNoPlay() = runTest {
         val saved = QueueCodec.encode(QueueState().replace(songs(3), 2).state.withPosition(51_000))
         val r = rig(saved)

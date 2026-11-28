@@ -71,6 +71,7 @@ Out of scope for v1:
 | Recommendations | `GET /api/recommendations?count=` (1–30) |
 | Discovery lists | `GET /api/discovery/{personal\|for_me\|classics\|artist_deep_dive\|new_releases\|<lens>}?count=` (1–150) |
 | Playlist Inbox | [Inbox list and edition GETs](PLAYLIST_INBOX_CONTRACT.md) power the Discover shelf and edition detail. Play owned tracks queues the edition's playable occurrences in source order, including repeats. With zero or unknown ownership, playback is unavailable and the current queue is preserved. Download and Try again use the Inbox POST with the edition ID and original track position. Row progress uses the server-attached acquisition key and the shared Downloads feed. Import triggers a bounded ownership refresh while the detail is visible, and Refresh status can recheck manually. Playback uses the refreshed edition’s confirmed ownership. |
+| Artist Radio and Discovery Mix | [Android radio mixes](ANDROID_RADIO_MIX_CONTRACT.md): stored previews, native owned-only playback, and per-track discovery downloads. |
 | List refresh | `POST /api/discovery/{list}/refresh` (`count` JSON integer 1–20) |
 | Feedback | `POST /api/discovery/feedback` `{artist, album, action, metadata}`; actions `save`, `dismiss`, `dismiss_artist`, `remove_for_me` |
 | Blocked genres | `GET`, `POST`, `DELETE /api/discovery/blocked-genres` `{genre}` (DISC-10). Android: Discover card menus (Block genre, the album's own genres only) and Settings › Blocklist. `DELETE` carries a JSON body |
